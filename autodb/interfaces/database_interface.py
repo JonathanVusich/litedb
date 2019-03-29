@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 
 class DatabaseInterface(ABC):
-    """Provides an easy interface for a user to store and retrieve objects by value."""
+    """Provides an easy interfaces for a user to store and retrieve objects by value."""
 
     @abstractmethod
     def insert(self, complex_object: object) -> bool:
