@@ -7,7 +7,7 @@ class DatabaseInterface(ABC):
 
     @abstractmethod
     def insert(self, complex_object: object) -> bool:
-        """Allows a user to insert arbitrary data into the trie storage."""
+        """Allows a user to insert arbitrary data into the index storage."""
         pass
 
     @abstractmethod
