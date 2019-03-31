@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+
 class TestObjectNoClassVars:
 
     def __init__(self):
@@ -7,6 +10,7 @@ class TestObjectNoClassVars:
         self.str = "test"
         self.bytes = bytes(b"test")
         self.bytearray = bytearray(b"test")
+        self.no_index = Decimal("1234")
 
 
 class TestObjectClassVars:
@@ -20,3 +24,16 @@ class TestObjectClassVars:
         self.str = "test"
         self.bytes = bytes(b"test")
         self.bytearray = bytearray(b"test")
+        self.no_index = Decimal("1234")
+
+
+class TestObjectUnderscoreVars:
+
+    def __init__(self):
+        self._int = 12
+        self._bool = False
+        self._float = 12.34
+        self._str = "test"
+        self._bytes = bytes(b"test")
+        self._bytearray = bytearray(b"test")
+        self._noindex = Decimal("1234")
