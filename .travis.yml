@@ -4,7 +4,7 @@ dist: xenial
 sudo: true
 before_install:
     - python setup.py install
-    - pip install requirements-dev.txt
+    - pip install -r requirements-dev.txt
 script:
     - pytest --cov autodb
 after_success:
