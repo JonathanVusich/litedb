@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 
-class TestObjectNoClassVars:
+class ObjectNoClassVars:
 
     def __init__(self):
         self.int = 12
@@ -13,7 +13,7 @@ class TestObjectNoClassVars:
         self.no_index = Decimal("1234")
 
 
-class TestObjectClassVars:
+class ObjectClassVars:
 
     class_var = "class_var"
 
@@ -27,7 +27,7 @@ class TestObjectClassVars:
         self.no_index = Decimal("1234")
 
 
-class TestObjectUnderscoreVars:
+class ObjectUnderscoreVars:
 
     def __init__(self):
         self._int = 12
