@@ -6,7 +6,7 @@ before_install:
     - pip install coveralls
     - python setup.py install
 script:
-    - pytest
+    - pytest --cov autodb
 after_success:
     - coveralls
 notifications:
