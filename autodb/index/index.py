@@ -66,12 +66,17 @@ class Index:
             self.none_indexes.remove(index)
             return
         entry = self.indexes[value] if value in self.indexes else None
-        if entry:
+        if entry is not None:
             if isinstance(entry, set):
+                if index not in entry:
+                    raise KeyError
                 entry.remove(index)
                 if len(entry) == 1:
                     self.indexes[value] = entry.pop()
             else:
-                self.indexes.pop(value)
+                if index == entry:
+                    self.indexes.pop(value)
+                else:
+                    raise KeyError
         else:
             raise KeyError
