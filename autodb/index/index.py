@@ -8,10 +8,9 @@ class Index:
     This class stores maps valid index values to their corresponding list index.
     """
 
-    def __init__(self, trie_type):
-        self.indexes: SortedDict[trie_type, Union[int, Set[int]]] = SortedDict()
+    def __init__(self):
+        self.indexes: SortedDict[object, Union[int, Set[int]]] = SortedDict()
         self.none_indexes: Set[int] = set()
-        self.trie_type = trie_type
 
     def __len__(self):
         return len(self.indexes) + len(self.none_indexes)
@@ -41,9 +40,14 @@ class Index:
             return self.indexes[value]
 
     def retrieve_range(self, low, high) -> Optional[Set[int]]:
-        return_set: Set[int] = set()
-        if high is None:
+        """This function retrieves a range of values depending on the high and low indexes given."""
+        if high is None and low is None:
             return self.none_indexes if len(self.none_indexes) == 1 else None
+        if high is None and low is not None:
+            raise ValueError
+        if high < low:
+            raise ValueError
+        return_set: Set[int] = set()
         max_index = self.indexes.bisect_right(high)
         if low is None:
             return_set = self.none_indexes.copy()
