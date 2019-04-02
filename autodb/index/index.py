@@ -1,4 +1,5 @@
-from typing import Union, Optional, List, Set
+from typing import Union, Optional, Set
+
 from sortedcontainers import SortedDict
 
 
@@ -8,7 +9,7 @@ class Index:
     """
 
     def __init__(self, trie_type):
-        self.indexes: SortedDict[trie_type, Set[int]] = SortedDict()
+        self.indexes: SortedDict[trie_type, Union[int, Set[int]]] = SortedDict()
         self.none_indexes: Set[int] = set()
         self.trie_type = trie_type
 
@@ -20,46 +21,57 @@ class Index:
         if value is None:
             self.none_indexes.add(index)
             return
-        if not isinstance(value, self.trie_type):
-            raise ValueError(f"{value} is not an instance of {self.trie_type}!")
         if value in self.indexes:
-            self.indexes[value].add(index)
+            indexes = self.indexes[value]
+            if isinstance(indexes, set):
+                self.indexes[value].add(index)
+            else:
+                self.indexes[value] = {indexes, index}
         else:
-            self.indexes.update({value: {index}})
+            self.indexes.update({value: index})
 
-    def retrieve(self, value) -> Optional[frozenset]:
+    def retrieve(self, value) -> Optional[Set[int]]:
+        """Return a set that contains the indexes that match the specified value."""
         if value is None:
-            return frozenset(self.none_indexes)
-        elif not isinstance(value, self.trie_type):
-            raise ValueError(f"{value} is not an instance of {self.trie_type}!")
+            return self.none_indexes
         if value in self.indexes:
-            return frozenset(self.indexes[value])
+            indexes = self.indexes[value]
+            if isinstance(indexes, int):
+                return {indexes}
+            return self.indexes[value]
 
-    def retrieve_range(self, low, high) -> Optional[frozenset]:
-        if low is not None and not isinstance(low, self.trie_type):
-            raise ValueError(f"{low} is not an instance of {self.trie_type}!")
-        elif high is not None and not isinstance(high, self.trie_type):
-            raise ValueError(f"{high} is not an instance of {self.trie_type}!")
-
+    def retrieve_range(self, low, high) -> Optional[Set[int]]:
         return_set: Set[int] = set()
         if high is None:
-            return
+            return self.none_indexes if len(self.none_indexes) == 1 else None
         max_index = self.indexes.bisect_right(high)
         if low is None:
-            return_set = self.none_indexes
+            return_set = self.none_indexes.copy()
             min_index = 0
         else:
             min_index = self.indexes.bisect_left(low)
         index_sets = self.indexes.values()[min_index:max_index]
 
-        if not index_sets:
+        if len(index_sets) == 0 and len(return_set) == 0:
             return
-        return_set = return_set.union(*index_sets)
-        return frozenset(return_set)
+        for index in index_sets:
+            if isinstance(index, set):
+                return_set.update(index)
+            else:
+                return_set.add(index)
+        return return_set
 
     def destroy(self, value, index: int) -> None:
+        if value is None:
+            self.none_indexes.remove(index)
+            return
         entry = self.indexes[value] if value in self.indexes else None
         if entry:
-            entry.remove(index)
-            if len(entry) == 0:
+            if isinstance(entry, set):
+                entry.remove(index)
+                if len(entry) == 1:
+                    self.indexes[value] = entry.pop()
+            else:
                 self.indexes.pop(value)
+        else:
+            raise KeyError
