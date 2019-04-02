@@ -85,15 +85,12 @@ class IndexRetrieveRangeTest(unittest.TestCase):
         max_examples=100
     )
     def test_retrieve_range_int(self, low, high):
-        if high < low:
-            with pytest.raises(ValueError):
-                self.int_index.retrieve_range(low, high)
+        assume(high > low)
+        range = self.int_index.retrieve_range(low, high)
+        if high - low == 0:
+            assert range == {high}
         else:
-            range = self.int_index.retrieve_range(low, high)
-            if high - low == 0:
-                assert range == {high}
-            else:
-                assert len(range) == high - low + 1
+            assert len(range) == high - low + 1
 
     @given(
         low=integers(min_value=0, max_value=9),
@@ -105,15 +102,12 @@ class IndexRetrieveRangeTest(unittest.TestCase):
     def test_retrieve_range_str(self, low, high):
         high = str(high)
         low = str(low)
-        if high < low:
-            with pytest.raises(ValueError):
-                self.str_index.retrieve_range(low, high)
+        assume(high > low)
+        range = self.str_index.retrieve_range(low, high)
+        if high == low:
+            assert range == {int(high)}
         else:
-            range = self.str_index.retrieve_range(low, high)
-            if high == low:
-                assert range == {int(high)}
-            else:
-                assert len(range) == int(high) - int(low) + 1
+            assert len(range) == int(high) - int(low) + 1
 
 
 class IndexDestroyTest(unittest.TestCase):
