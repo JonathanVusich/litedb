@@ -1,6 +1,7 @@
 import pytest
-from autodb.index import Index
 from sortedcontainers import SortedDict
+
+from autodb.index import Index
 
 
 def test_index_init():
@@ -14,75 +15,69 @@ def test_insert():
     index = Index(bytes)
     index.add(b"23", 1)
     assert len(index) == 1
-    assert index.indexes[b"23"] == {1}
+    assert index.indexes[b"23"] == 1
     index.add(b"23", 2)
     assert len(index) == 1
     assert index.indexes[b"23"] == {1, 2}
-    index.add(b"23", 2)
+    index.add(b"23", 3)
     assert len(index) == 1
-    assert index.indexes[b"23"] == {1, 2}
+    assert index.indexes[b"23"] == {1, 2, 3}
     index.add(None, 1)
     assert len(index) == 2
     assert index.none_indexes == {1}
-
-
-def test_bad_insert():
-    index = Index(bytes)
-    index.add(b"23", 1)
-    with pytest.raises(ValueError):
-        index.add("23", 2)
 
 
 def test_retrieve():
     index = Index(bytes)
     index.add(b"23", 1)
     assert index.retrieve(b"23") == {1}
+    index.add(b"23", 2)
+    assert index.retrieve(b"23") == {1, 2}
     index.add(b"24", 2)
     assert index.retrieve(b"24") == {2}
     index.add(None, 3)
     assert index.retrieve(None) == {3}
-
-
-def test_bad_retrieve():
-    index = Index(bytes)
-    index.add(b"23", 1)
-    with pytest.raises(ValueError):
-        index.retrieve("23")
+    assert index.retrieve(b"26") is None
 
 
 def test_retrieve_range_bytes():
     index = Index(bytes)
-    index.add(None, 0)
-    index.add(b"1", 1)
-    index.add(b"2", 2)
     index.add(b"3", 3)
+    index.add(b"3", 4)
     index.add(b"4", 4)
-    range = index.retrieve_range(None, b"3")
-    assert range == {0, 1, 2, 3}
-    range = index.retrieve_range(b"1", b"4")
-    assert range == {1, 2, 3, 4}
-    range = index.retrieve_range(b"5", b"7")
+    index.add(b"5", 5)
+    index.add(b"6", 6)
+    range = index.retrieve_range(None, None)
     assert range is None
-
-
-def test_retrieve_range_int():
-    index = Index(int)
+    range = index.retrieve_range(None, b"2")
+    assert range is None
     index.add(None, 0)
-    index.add(1, 1)
-    index.add(2, 2)
-    index.add(3, 3)
-    index.add(4, 4)
-    range = index.retrieve_range(None, 3)
-    assert range == {0, 1, 2, 3}
-    range = index.retrieve_range(1, 4)
-    assert range == {1, 2, 3, 4}
-    range = index.retrieve_range(5, 7)
-    assert range is None
+    range = index.retrieve_range(None, None)
+    assert range == {0}
+    range = index.retrieve_range(b"3", b"4")
+    assert range == {3, 4}
+    range = index.retrieve_range(b"3", b"8")
+    assert range == {3, 4, 5, 6}
 
 
 def test_destroy():
     index = Index(bytes)
+    index.add(None, 0)
     index.add(b"23", 1)
+    index.add(b"23", 2)
+    index.add(b"23", 3)
+    index.destroy(None, 0)
+    assert len(index) == 1
     index.destroy(b"23", 1)
+    assert len(index) == 1
+    assert index.retrieve(b"23") == {2, 3}
+    index.destroy(b"23", 2)
+    assert len(index) == 1
+    assert index.retrieve(b"23") == {3}
+    index.destroy(b"23", 3)
     assert len(index) == 0
-    assert not index.retrieve(b"23")
+    assert index.retrieve(b"23") is None
+    with pytest.raises(KeyError):
+        index.destroy(None, 0)
+    with pytest.raises(KeyError):
+        index.destroy(b"23", 1)
