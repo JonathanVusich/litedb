@@ -5,14 +5,13 @@ from autodb.index import Index
 
 
 def test_index_init():
-    index = Index(bytes)
-    assert index.trie_type == bytes
+    index = Index()
     assert isinstance(index.indexes, SortedDict)
     assert len(index) == 0
 
 
 def test_insert():
-    index = Index(bytes)
+    index = Index()
     index.add(b"23", 1)
     assert len(index) == 1
     assert index.indexes[b"23"] == 1
@@ -28,7 +27,7 @@ def test_insert():
 
 
 def test_retrieve():
-    index = Index(bytes)
+    index = Index()
     index.add(b"23", 1)
     assert index.retrieve(b"23") == {1}
     index.add(b"23", 2)
@@ -41,7 +40,7 @@ def test_retrieve():
 
 
 def test_retrieve_range_bytes():
-    index = Index(bytes)
+    index = Index()
     index.add(b"3", 3)
     index.add(b"3", 4)
     index.add(b"4", 4)
@@ -61,7 +60,7 @@ def test_retrieve_range_bytes():
 
 
 def test_destroy():
-    index = Index(bytes)
+    index = Index()
     index.add(None, 0)
     index.add(b"23", 1)
     index.add(b"23", 2)
