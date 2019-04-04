@@ -1,7 +1,7 @@
 import pytest
 from autodb.table import Table
 from ..test_utils.object_utils_test_objects import ObjectNoClassVars, ObjectClassVars, ObjectUnderscoreVars
-from .table_test_objects import BadTableObject, GoodTableObject, StandardTableObject
+from .table_test_objects import BadObject, GoodObject, StandardTableObject, GoodIndex, BadAndGoodObject
 
 
 def test_table_init():
@@ -14,8 +14,8 @@ def test_table_init():
 def test_table_insert_indexes():
     table = Table()
 
-    bad_object1 = BadTableObject(12)
-    bad_object2 = BadTableObject(13)
+    bad_object1 = BadObject(12)
+    bad_object2 = BadObject(13)
 
     table._index_item(bad_object1, 0)
     assert len(table.index_map) == 1
@@ -23,8 +23,8 @@ def test_table_insert_indexes():
     assert len(table.index_map) == 0
     assert "bad_index" in table.index_blacklist
 
-    good_object1 = GoodTableObject(12)
-    good_object2 = GoodTableObject(13)
+    good_object1 = GoodObject(12)
+    good_object2 = GoodObject(13)
 
     table = Table()
 
@@ -33,6 +33,36 @@ def test_table_insert_indexes():
     table._index_item(good_object2, 1)
     assert len(table.index_map) == 1
     assert "bad_index" not in table.index_blacklist
+
+
+def test_table_unindex_item():
+    table = Table()
+
+    table.insert(StandardTableObject(1, 2))
+    table.insert(StandardTableObject(3, 4))
+    assert len(table.index_map["x"]) == 2
+    assert len(table.index_map["y"]) == 2
+
+    table._unindex_item(StandardTableObject(1, 2), 0)
+    assert len(table.index_map["x"]) == 1
+    assert len(table.index_map["y"]) == 1
+
+    table = Table()
+
+    table.insert(BadAndGoodObject(1))
+    table.insert(BadAndGoodObject(3))
+    assert len(table.index_map) == 1
+    assert len(table.index_map["good_index"]) == 2
+
+    assert len(table.index_blacklist) == 1
+    assert "bad_index" in table.index_blacklist
+
+    table._unindex_item(BadAndGoodObject(1), 0)
+    table._unindex_item(BadAndGoodObject(3), 1)
+
+    assert "bad_index" in table.index_blacklist
+    assert len(table.index_map) == 1
+    assert len(table.index_map["good_index"]) == 0
 
 
 def test_table_insert_objects():
@@ -110,6 +140,14 @@ def test_table_retrieve_bad_queries():
 
     with pytest.raises(IndexError):
         table._retrieve(x=(b"test", b"test2"))
+
+
+def test_table_unused_indexes():
+    table = Table()
+    table.insert(GoodObject(1))
+    table.insert(GoodObject(2))
+    table.delete(good_index=GoodIndex(1))
+    assert table.unused_indexes == [0]
 
 
 
