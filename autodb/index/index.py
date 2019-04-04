@@ -8,9 +8,10 @@ class Index:
     This class stores maps valid index values to their corresponding list index.
     """
 
-    def __init__(self):
+    def __init__(self, index_type):
         self.indexes: SortedDict[object, Union[int, Set[int]]] = SortedDict()
         self.none_indexes: Set[int] = set()
+        self.index_type = index_type
 
     def __len__(self):
         return len(self.indexes) + len(self.none_indexes)
@@ -32,8 +33,9 @@ class Index:
     def retrieve(self, value) -> Optional[Set[int]]:
         """Return a set that contains the indexes that match the specified value."""
         if value is None:
-            return self.none_indexes
-        if value in self.indexes:
+            if len(self.none_indexes) > 0:
+                return self.none_indexes
+        elif value in self.indexes:
             indexes = self.indexes[value]
             if isinstance(indexes, int):
                 return {indexes}

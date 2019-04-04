@@ -10,7 +10,8 @@ class ObjectNoClassVars:
         self.str = "test"
         self.bytes = bytes(b"test")
         self.bytearray = bytearray(b"test")
-        self.no_index = Decimal("1234")
+        self.complex = complex(1234)
+        self.decimal = Decimal("1234")
 
 
 class ObjectClassVars:
@@ -24,7 +25,8 @@ class ObjectClassVars:
         self.str = "test"
         self.bytes = bytes(b"test")
         self.bytearray = bytearray(b"test")
-        self.no_index = Decimal("1234")
+        self.complex = complex(1234)
+        self.decimal = Decimal("1234")
 
 
 class ObjectUnderscoreVars:

@@ -1,23 +1,22 @@
 import time
 from autodb.index import Index
 from autodb.table import Table
-from tests.test_utils.objects import ObjectClassVars
+from tests.test_utils.object_utils_test_objects import ObjectClassVars
 import sys
 import inspect
-
+from decimal import Decimal
+from pcpartpicker.parts import ThermalPaste
+from moneyed import Money, USD
+from autodb.utils.object_utils import retrieve_possible_object_indexes
 
 def main():
-    index = Index(int)
+    thermal_paste = ThermalPaste("Grizzly", "Arctic", 2.3, Money("12.34", USD))
+
     start = time.perf_counter()
-    for i in range(1000000):
-        if i == 500000:
-            print((time.perf_counter() - start)/500000)
-            start = time.perf_counter()
-        index.add(i, i)
-        index.add(i, i+1)
-        index.add(i, i+2)
-    print((time.perf_counter() - start)/500000)
-    print(get_size(index))
+    for i in range(10000000):
+        retrieve_possible_object_indexes(thermal_paste)
+    print((time.perf_counter() - start))
+
 
 
 def get_size(obj, seen=None):
