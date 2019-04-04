@@ -105,6 +105,14 @@ def test_table_retrieve_bad_queries():
     with pytest.raises(IndexError):
         table._retrieve(x=(1, 3, 5))
 
+    with pytest.raises(IndexError):
+        table._retrieve(x=b"test")
+
+    with pytest.raises(IndexError):
+        table._retrieve(x=(b"test", b"test2"))
+
+
+
 
 
 
