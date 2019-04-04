@@ -141,6 +141,9 @@ def test_table_retrieve_bad_queries():
     with pytest.raises(IndexError):
         table._retrieve(x=(b"test", b"test2"))
 
+    with pytest.raises(IndexError):
+        table._retrieve(x=(1, b"test"))
+
 
 def test_table_unused_indexes():
     table = Table()
@@ -148,6 +151,9 @@ def test_table_unused_indexes():
     table.insert(GoodObject(2))
     table.delete(good_index=GoodIndex(1))
     assert table.unused_indexes == [0]
+    table.insert(GoodObject(1))
+    assert table.unused_indexes == []
+
 
 
 
