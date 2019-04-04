@@ -1,6 +1,8 @@
-from typing import List, Set, Dict, Tuple
+from copy import deepcopy
+from typing import List, Set, Dict, Optional
+
 from ..index import Index
-from ..utils.object_utils import retrieve_object_indexes
+from ..utils.object_utils import retrieve_possible_object_indexes
 
 
 class Table:
@@ -10,23 +12,20 @@ class Table:
     objects from the list.
     """
 
-    def __init__(self, first_object: object) -> None:
+    def __init__(self) -> None:
         self.size = 0
-        self.table_type = type(first_object)
         self.table: List[object] = []
-        self.unused_indexes: Set[int] = {}
+        self.unused_indexes: List[int] = []
         self.index_map: Dict[str, Index] = {}
-        self.insert(first_object)
+        self.index_blacklist: Set[str] = set()
 
     def __repr__(self):
-        return f"Table(table_type={self.table_type})"
+        return f"Table(size={self.size})"
 
     def __len__(self):
         return self.size
 
     def insert(self, item: object) -> None:
-        if not isinstance(item, self.table_type):
-            raise ValueError(f"Cannot insert item of type {type(item)} into table of type {self.table_type}!")
         if len(self.unused_indexes) > 0:
             index = self.unused_indexes.pop()
             self.table[index] = item
@@ -34,27 +33,70 @@ class Table:
             index = len(self.table)
             self.table.append(item)
         self.size += 1
-        self._insert_indexes(item, index)
+        self._index_item(item, index)
 
-    def _insert_indexes(self, item: object, index: int) -> None:
+    def retrieve(self, **kwargs) -> Optional:
+        indexes = self._retrieve(**kwargs)
+        if indexes:
+            retrieved_items = [deepcopy(self.table[index]) for index in indexes]
+            return retrieved_items
+
+    def delete(self, **kwargs):
+        indexes_to_delete = self._retrieve(**kwargs)
+        for index in indexes_to_delete:
+            self._delete(index)
+
+    def _index_item(self, item: object, index: int) -> None:
         """Inserts/creates index tables based on the given object."""
-        indexes = retrieve_object_indexes(item)
+        indexes = retrieve_possible_object_indexes(item)
         for var_name, value in indexes.items():
+            if var_name in self.index_blacklist:
+                continue
             if var_name not in self.index_map:
                 self.index_map.update({var_name: Index(type(value))})
-            self.index_map[var_name].add(value, index)
+            try:
+                self.index_map[var_name].add(value, index)
+            except TypeError:
+                self.index_map.pop(var_name)
+                self.index_blacklist.add(var_name)
 
-    def _remove_indexes(self, item: object) -> None:
+    def _unindex_item(self, item: object, index: int) -> None:
         """Removes indexes for the given object."""
-        indexes = retrieve_object_indexes(item)
+        indexes = retrieve_possible_object_indexes(item)
         for var_name, value in indexes.items():
-            self.index_map[var_name].destroy()
+            if var_name in self.index_blacklist:
+                continue
+            self.index_map[var_name].destroy(value, index)
 
-    def _retrieve(self, **kwargs) -> Tuple[object]:
-        pass
+    def _retrieve(self, **kwargs) -> Optional[Set[int]]:
+        indexes: Set[int] = set()
+        for key in kwargs.keys():
+            if key in self.index_blacklist or key not in self.index_map:
+                raise IndexError
+            index = self.index_map[key]
+            if len(index) == 0:
+                continue
+            value = kwargs[key]
+            if isinstance(value, tuple):
+                if len(value) != 2:
+                    raise IndexError
+                low, high = value
+                if low is not None and not isinstance(low, index.index_type):
+                    raise IndexError
+                if high is not None and not isinstance(high, index.index_type):
+                    raise IndexError
+                indexes.update(index.retrieve_range(low, high))
+            else:
+                if value is not None and not isinstance(value, index.index_type):
+                    raise IndexError
+                results = index.retrieve(value)
+                if results:
+                    indexes.update(results)
+        if len(indexes) > 0:
+            return indexes
 
     def _delete(self, object_index: int) -> None:
-        self._remove_indexes(self.table[object_index])
+        self._unindex_item(self.table[object_index], object_index)
         self.table[object_index] = None
-        self.unused_indexes.add(object_index)
+        self.unused_indexes.append(object_index)
         self.size -= 1
