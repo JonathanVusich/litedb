@@ -9,7 +9,7 @@ from autodb.index import Index
 class IndexAddTest(unittest.TestCase):
 
     def setUp(self):
-        self.index = Index()
+        self.index = Index(str)
 
     @given(
         value=text(),
@@ -44,7 +44,7 @@ class IndexAddTest(unittest.TestCase):
 class IndexRetrieveTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.index = Index()
+        self.index = Index(str)
 
     @given(
         value=text(),
@@ -70,10 +70,10 @@ class IndexRetrieveTest(unittest.TestCase):
 class IndexRetrieveRangeTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.int_index = Index()
+        self.int_index = Index(int)
         for i in range(100):
             self.int_index.add(i, i)
-        self.str_index = Index()
+        self.str_index = Index(int)
         for i in range(10):
             self.str_index.add(str(i), i)
 
@@ -113,7 +113,7 @@ class IndexRetrieveRangeTest(unittest.TestCase):
 class IndexDestroyTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.index = Index()
+        self.index = Index(str)
 
     @given(
         value=text(),
