@@ -2,7 +2,7 @@ import pytest
 from autodb.table import Table
 from ..test_utils.object_utils_test_objects import ObjectNoClassVars, ObjectClassVars, ObjectUnderscoreVars
 from .table_test_objects import BadObject, GoodObject, StandardTableObject, GoodIndex, BadAndGoodObject
-
+from autodb.errors import InvalidRange
 
 def test_table_init():
     table = Table()
@@ -118,9 +118,9 @@ def test_table_retrieve_well_formed_queries():
         assert sto.y == -(x + 1)
 
     # verify no references returned
-    item = table.retrieve(x=1)[0]
+    item = list(table.retrieve(x=1))[0]
     item.x = 2
-    assert table.retrieve(x=1)[0].x == 1
+    assert list(table.retrieve(x=1))[0].x == 1
 
 
 def test_table_retrieve_bad_queries():
@@ -132,16 +132,16 @@ def test_table_retrieve_bad_queries():
     with pytest.raises(IndexError):
         table._retrieve(z=12)
 
-    with pytest.raises(IndexError):
+    with pytest.raises(InvalidRange):
         table._retrieve(x=(1, 3, 5))
 
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         table._retrieve(x=b"test")
 
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         table._retrieve(x=(b"test", b"test2"))
 
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         table._retrieve(x=(1, b"test"))
 
 
