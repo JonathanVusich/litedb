@@ -1,6 +1,7 @@
 from ..table import Table
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Generator, Union
+from itertools import chain
 
 
 class MemoryDatabase:
@@ -34,3 +35,15 @@ class MemoryDatabase:
             if class_type not in self.class_map:
                 raise IndexError
             return self.class_map[class_type].retrieve(**kwargs)
+
+    def delete(self, class_type=None, **kwargs) -> None:
+        if class_type is None:
+            for table in self.class_map.values():
+                try:
+                    table.delete(**kwargs)
+                except IndexError:
+                    continue
+        else:
+            if class_type not in self.class_map:
+                raise IndexError
+            self.class_map[class_type].delete(**kwargs)
