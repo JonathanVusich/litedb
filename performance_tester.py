@@ -1,22 +1,29 @@
-import time
-from autodb.index import Index
-from autodb.table import Table
-from tests.test_utils.object_utils_test_objects import ObjectClassVars
-import sys
+import cProfile as profile
 import inspect
-from decimal import Decimal
-from pcpartpicker.parts import ThermalPaste
-from moneyed import Money, USD
-from autodb.utils.object_utils import retrieve_possible_object_indexes
+import sys
+
+from diskcache import Cache
+from pcpartpicker.parts import Memory
+
+from autodb.database import MemoryDatabase
+
 
 def main():
-    thermal_paste = ThermalPaste("Grizzly", "Arctic", 2.3, Money("12.34", USD))
-
-    start = time.perf_counter()
-    for i in range(10000000):
-        retrieve_possible_object_indexes(thermal_paste)
-    print((time.perf_counter() - start))
-
+    database = MemoryDatabase()
+    cache = Cache("/tmp/")
+    part_data = cache["part_data"]
+    profiler = profile.Profile()
+    for part in part_data.values():
+        for p in part:
+            database.insert(p)
+    print(get_size(database))
+    profiler.enable()
+    parts = list(database.retrieve(class_type=Memory, brand="G.Skill", module_type="DDR4", cas_timing=16))
+    parts = [x for x in database.class_map[Memory].table if x is not None and x.brand == "G.Skill" \
+             and x.module_type == "DDR4" and x.cas_timing == 16]
+    profiler.disable()
+    print(len(database))
+    profiler.dump_stats('retrieve.prof')
 
 
 def get_size(obj, seen=None):
@@ -40,7 +47,7 @@ def get_size(obj, seen=None):
     if isinstance(obj, dict):
         size += sum((get_size(v, seen) for v in obj.values()))
         size += sum((get_size(k, seen) for k in obj.keys()))
-    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray, type)):
         size += sum((get_size(i, seen) for i in obj))
 
     if hasattr(obj, '__slots__'):  # can have __slots__ with __dict__
