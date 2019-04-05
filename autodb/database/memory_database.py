@@ -18,18 +18,18 @@ class MemoryDatabase:
             self.class_map.update({class_type: Table()})
         self.class_map[class_type].insert(complex_object)
 
-    def retrieve(self, class_type=None, **kwargs) -> List[object]:
+    def retrieve(self, class_type=None, **kwargs) -> Union[Optional[Generator[object, None, None]], chain]:
         if class_type is None:
-            results = []
+            object_generators = []
             for table in self.class_map.values():
                 try:
                     table_results = table.retrieve(**kwargs)
                 except IndexError:
                     continue
                 if table_results is not None:
-                    results.extend(table_results)
-            if results:
-                return results
+                    object_generators.append(table_results)
+            if object_generators:
+                return chain(*object_generators)
         else:
             if class_type not in self.class_map:
                 raise IndexError
