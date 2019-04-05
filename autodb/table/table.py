@@ -70,7 +70,7 @@ class Table:
 
     def _retrieve(self, **kwargs) -> Optional[Set[int]]:
         indexes: Set[int] = set()
-        for key in kwargs.keys():
+        for x, key in enumerate(kwargs.keys()):
             if key in self.index_blacklist or key not in self.index_map:
                 raise IndexError
             index = self.index_map[key]
@@ -85,13 +85,19 @@ class Table:
                     raise IndexError
                 if high is not None and not isinstance(high, index.index_type):
                     raise IndexError
-                indexes.update(index.retrieve_range(low, high))
+                if x == 0:
+                    indexes.update(index.retrieve_range(low, high))
+                else:
+                    indexes.intersection_update(index.retrieve_range(low, high))
             else:
                 if value is not None and not isinstance(value, index.index_type):
                     raise IndexError
                 results = index.retrieve(value)
                 if results:
-                    indexes.update(results)
+                    if x == 0:
+                        indexes.update(results)
+                    else:
+                        indexes.intersection_update(results)
         if len(indexes) > 0:
             return indexes
 
