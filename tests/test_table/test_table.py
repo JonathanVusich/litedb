@@ -128,6 +128,14 @@ def test_table_retrieve_well_formed_queries():
     for item in items:
         assert isinstance(item, StandardTableObject)
 
+    # Check multiple queries
+    items = list(table.retrieve(x=9, y=-9))
+    assert len(items) == 1
+    assert items[0].x == 9
+    assert items[0].y == -9
+
+    assert not list(table.retrieve(x=9, y=9))
+
 
 def test_table_retrieve_bad_queries():
     table = Table()

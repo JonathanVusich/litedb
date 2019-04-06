@@ -124,6 +124,6 @@ class IndexDestroyTest(unittest.TestCase):
         self.index.add(value, index)
         self.index.destroy(value, index)
         new_entry = self.index.retrieve(value)
-        assert new_entry is None
+        assert new_entry == set()
         with pytest.raises(KeyError):
             self.index.destroy(value, index)

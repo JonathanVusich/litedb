@@ -40,13 +40,14 @@ class Table:
         self.size += 1
         self._index_item(item, index)
 
-    def retrieve(self, **kwargs) -> Optional[Generator[object, None, None]]:
+    def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
         if len(kwargs) == 0:
             return (pickle.loads(item) for item in self.pickle_table if item is not None)
         indexes = self._retrieve(**kwargs)
         if indexes:
-            retrieved_items = (pickle.loads(self.pickle_table[index]) for index in indexes)
-            return retrieved_items
+            return (pickle.loads(self.pickle_table[index]) for index in indexes)
+        else:
+            return ([])
 
     def delete(self, **kwargs):
         indexes_to_delete = self._retrieve(**kwargs)
@@ -101,11 +102,10 @@ class Table:
                 if value is not None and not isinstance(value, index.index_type):
                     raise ValueError(f"\"{key}\" must be of type {index.index_type}")
                 results = index.retrieve(value)
-                if results:
-                    if x == 0:
-                        indexes.update(results)
-                    else:
-                        indexes.intersection_update(results)
+                if x == 0:
+                    indexes.update(results)
+                else:
+                    indexes.intersection_update(results)
         if len(indexes) > 0:
             return indexes
 
