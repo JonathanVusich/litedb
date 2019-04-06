@@ -61,20 +61,20 @@ class TestMemoryDatabase(unittest.TestCase):
     @given(
         value=integers()
     )
-    def test_database_delete(self, value):
+    def test_database_zelete(self, value):
         class_choice = self.class_choices[value % 6]
         if class_choice is not None:
             with pytest.raises(IndexError):
-                self.database.retrieve(class_type=class_choice, bad_index=value)
+                self.database.delete(class_type=class_choice, bad_index=value)
+        if class_choice == BadObject:
+            with pytest.raises(IndexError):
+                self.database.delete(class_type=class_choice, good_index=value)
+        elif class_choice == GoodObject:
+            self.database.delete(class_type=class_choice, good_index=GoodIndex(value))
+            assert not self.database.retrieve(class_type=class_choice, good_index=GoodIndex(value))
+        elif class_choice == BadAndGoodObject:
+            self.database.delete(class_type=class_choice, good_index=value)
+            assert not self.database.retrieve(class_type=class_choice, good_index=value)
         else:
-            if class_choice == BadObject:
-                with pytest.raises(IndexError):
-                    self.database.retrieve(class_type=class_choice, good_index=value)
-            else:
-                results = self.database.retrieve(class_type=class_choice, good_index=value)
-                if results:
-                    for result in results:
-                        if class_choice is not None:
-                            assert isinstance(result, class_choice)
-                        else:
-                            assert isinstance(result, (GoodObject, BadAndGoodObject))
+            self.database.delete(class_type=None, good_index=value)
+            assert not self.database.delete(class_type=None, good_index=value)
