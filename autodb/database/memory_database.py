@@ -20,7 +20,7 @@ class MemoryDatabase:
             self.class_map.update({class_type: Table()})
         self.class_map[class_type].insert(complex_object)
 
-    def retrieve(self, class_type=None, return_copies=True, **kwargs) -> Union[Optional[Generator[object, None, None]], chain]:
+    def retrieve(self, class_type=None, **kwargs) -> Union[Optional[Generator[object, None, None]], chain]:
         """
         This method retrieves objects from the database depending on the user specified query.
         Note: This method will not throw query errors when performing a search on the entire
@@ -34,10 +34,7 @@ class MemoryDatabase:
             object_generators = []
             for table in self.class_map.values():
                 try:
-                    if return_copies:
-                        table_results = table.retrieve(**kwargs)
-                    else:
-                        table_results = table.retrieve_references(**kwargs)
+                    table_results = table.retrieve(**kwargs)
                 except (IndexError, ValueError) as _:
                     continue
                 except InvalidRange:
@@ -49,10 +46,7 @@ class MemoryDatabase:
         else:
             if class_type not in self.class_map:
                 raise IndexError
-            if return_copies:
-                return self.class_map[class_type].retrieve(**kwargs)
-            else:
-                return self.class_map[class_type].retrieve_references(**kwargs)
+            return self.class_map[class_type].retrieve(**kwargs)
 
     def delete(self, class_type=None, **kwargs) -> None:
         if class_type is None:

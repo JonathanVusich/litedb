@@ -42,12 +42,6 @@ class Table:
             retrieved_items = (deepcopy(self.table[index]) for index in indexes)
             return retrieved_items
 
-    def retrieve_references(self, **kwargs) -> Optional[Generator[object, None, None]]:
-        indexes = self._retrieve(**kwargs)
-        if indexes:
-            retrieved_items = (self.table[index] for index in indexes)
-            return retrieved_items
-
     def delete(self, **kwargs):
         indexes_to_delete = self._retrieve(**kwargs)
         if indexes_to_delete:
