@@ -122,6 +122,12 @@ def test_table_retrieve_well_formed_queries():
     item.x = 2
     assert list(table.retrieve(x=1))[0].x == 1
 
+    # verify that no kwargs returns all objects
+    items = list(table.retrieve())
+    assert len(items) == 10
+    for item in items:
+        assert isinstance(item, StandardTableObject)
+
 
 def test_table_retrieve_bad_queries():
     table = Table()
