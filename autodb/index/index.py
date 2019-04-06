@@ -30,7 +30,7 @@ class Index:
         else:
             self.indexes.update({value: index})
 
-    def retrieve(self, value) -> Optional[Set[int]]:
+    def retrieve(self, value) -> Set[int]:
         """Return a set that contains the indexes that match the specified value."""
         if value is None:
             if len(self.none_indexes) > 0:
@@ -40,6 +40,8 @@ class Index:
             if isinstance(indexes, int):
                 return {indexes}
             return self.indexes[value]
+        else:
+            return set()
 
     def retrieve_range(self, low, high) -> Optional[Set[int]]:
         """This function retrieves a range of values depending on the high and low indexes given."""

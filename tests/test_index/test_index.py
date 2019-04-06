@@ -36,7 +36,7 @@ def test_retrieve():
     assert index.retrieve(b"24") == {2}
     index.add(None, 3)
     assert index.retrieve(None) == {3}
-    assert index.retrieve(b"26") is None
+    assert index.retrieve(b"26") == set()
 
 
 def test_retrieve_range_bytes():
@@ -75,7 +75,7 @@ def test_destroy():
     assert index.retrieve(b"23") == {3}
     index.destroy(b"23", 3)
     assert len(index) == 0
-    assert index.retrieve(b"23") is None
+    assert index.retrieve(b"23") == set()
     with pytest.raises(KeyError):
         index.destroy(None, 0)
     with pytest.raises(KeyError):

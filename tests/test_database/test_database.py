@@ -15,6 +15,7 @@ def test_table_retrieve():
         database.retrieve(MemoryDatabase, x=12)
     with pytest.raises(InvalidRange):
         database.retrieve(SimpleRecord, x=(1, 2, 3))
+        database.retrieve(x=(1, 2, 3))
 
 
 def test_table_delete():
@@ -24,5 +25,6 @@ def test_table_delete():
         database.delete(MemoryDatabase, x=12)
     with pytest.raises(InvalidRange):
         database.delete(SimpleRecord, x=(1, 2, 3))
+        database.delete(x=(1, 2, 3))
 
 

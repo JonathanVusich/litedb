@@ -1,9 +1,9 @@
-from copy import deepcopy
+import pickle
 from typing import List, Set, Dict, Optional, Generator
 
+from ..errors import InvalidRange
 from ..index import Index
 from ..utils.object_utils import retrieve_possible_object_indexes
-from ..errors import InvalidRange
 
 
 class Table:
@@ -16,6 +16,7 @@ class Table:
     def __init__(self) -> None:
         self.size = 0
         self.table: List[object] = []
+        self.pickle_table: List[Optional[bytes]] = []
         self.unused_indexes: List[int] = []
         self.index_map: Dict[str, Index] = {}
         self.index_blacklist: Set[str] = set()
@@ -27,20 +28,26 @@ class Table:
         return self.size
 
     def insert(self, item: object) -> None:
+        byte_repr = pickle.dumps(item, protocol=pickle.HIGHEST_PROTOCOL)
         if len(self.unused_indexes) > 0:
             index = self.unused_indexes.pop()
             self.table[index] = item
+            self.pickle_table[index] = byte_repr
         else:
             index = len(self.table)
             self.table.append(item)
+            self.pickle_table.append(byte_repr)
         self.size += 1
         self._index_item(item, index)
 
-    def retrieve(self, **kwargs) -> Optional[Generator[object, None, None]]:
+    def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
+        if len(kwargs) == 0:
+            return (pickle.loads(item) for item in self.pickle_table if item is not None)
         indexes = self._retrieve(**kwargs)
         if indexes:
-            retrieved_items = (deepcopy(self.table[index]) for index in indexes)
-            return retrieved_items
+            return (pickle.loads(self.pickle_table[index]) for index in indexes)
+        else:
+            return ([])
 
     def delete(self, **kwargs):
         indexes_to_delete = self._retrieve(**kwargs)
@@ -95,16 +102,16 @@ class Table:
                 if value is not None and not isinstance(value, index.index_type):
                     raise ValueError(f"\"{key}\" must be of type {index.index_type}")
                 results = index.retrieve(value)
-                if results:
-                    if x == 0:
-                        indexes.update(results)
-                    else:
-                        indexes.intersection_update(results)
+                if x == 0:
+                    indexes.update(results)
+                else:
+                    indexes.intersection_update(results)
         if len(indexes) > 0:
             return indexes
 
     def _delete(self, object_index: int) -> None:
         self._unindex_item(self.table[object_index], object_index)
         self.table[object_index] = None
+        self.pickle_table[object_index] = None
         self.unused_indexes.append(object_index)
         self.size -= 1
