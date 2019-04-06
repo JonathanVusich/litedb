@@ -1,6 +1,6 @@
 import pytest
 from autodb.database import MemoryDatabase
-from ..test_table.table_test_objects import BadAndGoodObject, GoodObject, BadObject
+from ..test_table.table_test_objects import BadAndGoodObject, GoodObject, BadObject, GoodIndex
 from hypothesis.strategies import integers
 from hypothesis import given
 import unittest
@@ -32,19 +32,49 @@ class TestMemoryDatabase(unittest.TestCase):
         value=integers()
     )
     def test_database_retrieve(self, value):
-        class_choice = random.choice(self.class_choices)
-        if value % 2 == 0:
-            if class_choice is not None:
-                with pytest.raises(IndexError):
-                    self.database.retrieve(class_type=class_choice, bad_index=value)
-        else:
-            if class_choice == BadObject:
-                with pytest.raises(IndexError):
-                    results = self.database.retrieve(class_type=class_choice, good_index=value)
-            else:
-                results = self.database.retrieve(class_type=class_choice, good_index=value)
+        class_choice = self.class_choices[value % 6]
+        if class_choice is not None:
+            with pytest.raises(IndexError):
+                self.database.retrieve(class_type=class_choice, bad_index=value)
+        if class_choice == BadObject:
+            with pytest.raises(IndexError):
+                self.database.retrieve(class_type=class_choice, good_index=value)
+        elif class_choice == GoodObject:
+            results = self.database.retrieve(class_type=class_choice, good_index=GoodIndex(value))
+            if results:
                 for result in results:
-                    if class_choice is not None:
-                        assert isinstance(result, class_choice)
-                    else:
-                        assert isinstance(result, (GoodObject, BadAndGoodObject))
+                    assert isinstance(result, GoodObject)
+                    assert result.good_index == GoodIndex(value)
+        elif class_choice == BadAndGoodObject:
+            results = self.database.retrieve(class_type=class_choice, good_index=value)
+            if results:
+                for result in results:
+                    assert isinstance(result, BadAndGoodObject)
+                    assert result.good_index == value
+        else:
+            results = self.database.retrieve(class_type=None, good_index=value)
+            if results:
+                for result in results:
+                    assert isinstance(result, BadAndGoodObject)
+                    assert result.good_index == value
+
+    @given(
+        value=integers()
+    )
+    def test_database_zelete(self, value):
+        class_choice = self.class_choices[value % 6]
+        if class_choice is not None:
+            with pytest.raises(IndexError):
+                self.database.delete(class_type=class_choice, bad_index=value)
+        if class_choice == BadObject:
+            with pytest.raises(IndexError):
+                self.database.delete(class_type=class_choice, good_index=value)
+        elif class_choice == GoodObject:
+            self.database.delete(class_type=class_choice, good_index=GoodIndex(value))
+            assert not self.database.retrieve(class_type=class_choice, good_index=GoodIndex(value))
+        elif class_choice == BadAndGoodObject:
+            self.database.delete(class_type=class_choice, good_index=value)
+            assert not self.database.retrieve(class_type=class_choice, good_index=value)
+        else:
+            self.database.delete(class_type=None, good_index=value)
+            assert not self.database.delete(class_type=None, good_index=value)
