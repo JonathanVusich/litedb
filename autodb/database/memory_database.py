@@ -2,6 +2,7 @@ from ..table import Table
 
 from typing import List, Dict, Optional, Generator, Union
 from itertools import chain
+from ..errors import InvalidRange
 
 
 class MemoryDatabase:
@@ -20,6 +21,15 @@ class MemoryDatabase:
         self.class_map[class_type].insert(complex_object)
 
     def retrieve(self, class_type=None, return_copies=True, **kwargs) -> Union[Optional[Generator[object, None, None]], chain]:
+        """
+        This method retrieves objects from the database depending on the user specified query.
+        Note: This method will not throw query errors when performing a search on the entire
+        database. Typically this type of behavior should be avoided.
+        :param class_type:
+        :param return_copies:
+        :param kwargs:
+        :return:
+        """
         if class_type is None:
             object_generators = []
             for table in self.class_map.values():
@@ -28,8 +38,10 @@ class MemoryDatabase:
                         table_results = table.retrieve(**kwargs)
                     else:
                         table_results = table.retrieve_references(**kwargs)
-                except IndexError:
+                except (IndexError, ValueError) as _:
                     continue
+                except InvalidRange:
+                    raise InvalidRange(f"An invalid range query was given!")
                 if table_results is not None:
                     object_generators.append(table_results)
             if object_generators:
@@ -47,8 +59,10 @@ class MemoryDatabase:
             for table in self.class_map.values():
                 try:
                     table.delete(**kwargs)
-                except IndexError:
+                except (IndexError, ValueError) as _:
                     continue
+                except InvalidRange:
+                    raise InvalidRange(f"An invalid range query was given!")
         else:
             if class_type not in self.class_map:
                 raise IndexError
