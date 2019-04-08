@@ -1,16 +1,16 @@
-from ..table import Table
-from .database import Database
-
-from typing import List, Dict, Optional, Generator, Union
 from itertools import chain
+from typing import Dict, Optional, Generator, Union
+
+from .database import Database
 from ..errors import InvalidRange
+from ..table import MemoryTable
 
 
 class MemoryDatabase(Database):
     """In memory implementation of the AutoDB interface."""
 
     def __init__(self) -> None:
-        self.class_map: Dict[object, Table] = {}
+        self.class_map: Dict[object, MemoryTable] = {}
 
     def __len__(self):
         return sum((len(table) for table in self.class_map.values()))
@@ -21,7 +21,7 @@ class MemoryDatabase(Database):
     def insert(self, complex_object: object):
         class_type = type(complex_object)
         if class_type not in self.class_map:
-            self.class_map.update({class_type: Table()})
+            self.class_map.update({class_type: MemoryTable()})
         self.class_map[class_type].insert(complex_object)
 
     def retrieve(self, class_type=None, **kwargs) -> Union[Optional[Generator[object, None, None]], chain]:
