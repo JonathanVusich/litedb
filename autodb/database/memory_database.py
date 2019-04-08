@@ -15,6 +15,9 @@ class MemoryDatabase(Database):
     def __len__(self):
         return sum((len(table) for table in self.class_map.values()))
 
+    def __repr__(self):
+        return "".join([f"{str(cls)}: size={self.class_map[cls].size}" for cls in self.class_map.values()])
+
     def insert(self, complex_object: object):
         class_type = type(complex_object)
         if class_type not in self.class_map:
