@@ -1,11 +1,12 @@
 from ..table import Table
+from .database import Database
 
 from typing import List, Dict, Optional, Generator, Union
 from itertools import chain
 from ..errors import InvalidRange
 
 
-class MemoryDatabase:
+class MemoryDatabase(Database):
     """In memory implementation of the AutoDB interface."""
 
     def __init__(self) -> None:
@@ -13,6 +14,9 @@ class MemoryDatabase:
 
     def __len__(self):
         return sum((len(table) for table in self.class_map.values()))
+
+    def __repr__(self):
+        return "".join([f"{str(cls)}: size={self.class_map[cls].size}" for cls in self.class_map.values()])
 
     def insert(self, complex_object: object):
         class_type = type(complex_object)
