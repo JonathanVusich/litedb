@@ -46,18 +46,11 @@ class Index:
     def retrieve_range(self, low, high) -> Optional[Set[int]]:
         """This function retrieves a range of values depending on the high and low indexes given."""
         min_index = self.indexes.bisect_left(low) if low is not None else 0
-        max_index = self.indexes.bisect_right(high) if high is not None else 0
-        if low is None and high is None:
-            if len(self.none_indexes) == 0:
-                return
-            return self.none_indexes.copy()
-        elif low is None or high is None:
-            return_set = self.none_indexes.copy()
-        else:
-            return_set = set()
+        max_index = self.indexes.bisect_right(high) if high is not None else len(self.indexes) - 1
         index_sets = self.indexes.values()[min_index:max_index]
 
-        if len(index_sets) == 0 and len(return_set) == 0:
+        return_set = set()
+        if len(index_sets) == 0:
             return
         for index in index_sets:
             if isinstance(index, set):
