@@ -41,18 +41,16 @@ def test_retrieve():
 
 def test_retrieve_range_bytes():
     index = Index(bytes)
+    index.add(None, 2)
     index.add(b"3", 3)
     index.add(b"3", 4)
     index.add(b"4", 4)
     index.add(b"5", 5)
     index.add(b"6", 6)
     range = index.retrieve_range(None, None)
-    assert range is None
+    assert range == {2, 3, 4, 5, 6}
     range = index.retrieve_range(None, b"2")
-    assert range is None
-    index.add(None, 0)
-    range = index.retrieve_range(None, None)
-    assert range == {0}
+    assert range == {2}
     range = index.retrieve_range(b"3", b"4")
     assert range == {3, 4}
     range = index.retrieve_range(b"3", b"8")
