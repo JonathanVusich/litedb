@@ -1,1 +1,1 @@
-from .table import Table
+from .memory_table import MemoryTable

@@ -1,18 +1,18 @@
 import pytest
-from autodb.table import Table
+from autodb.table import MemoryTable
 from ..test_utils.object_utils_test_objects import ObjectNoClassVars, ObjectClassVars, ObjectUnderscoreVars
 from .table_test_objects import BadObject, GoodObject, StandardTableObject, GoodIndex, BadAndGoodObject
 from autodb.errors import InvalidRange
 
 def test_table_init():
-    table = Table()
+    table = MemoryTable()
     assert len(table.unused_indexes) == 0
     assert len(table) == 0
     assert len(table.index_blacklist) == 0
 
 
 def test_table_insert_indexes():
-    table = Table()
+    table = MemoryTable()
 
     bad_object1 = BadObject(12)
     bad_object2 = BadObject(13)
@@ -26,7 +26,7 @@ def test_table_insert_indexes():
     good_object1 = GoodObject(12)
     good_object2 = GoodObject(13)
 
-    table = Table()
+    table = MemoryTable()
 
     table._index_item(good_object1, 0)
     assert len(table.index_map) == 1
@@ -36,7 +36,7 @@ def test_table_insert_indexes():
 
 
 def test_table_unindex_item():
-    table = Table()
+    table = MemoryTable()
 
     table.insert(StandardTableObject(1, 2))
     table.insert(StandardTableObject(3, 4))
@@ -47,7 +47,7 @@ def test_table_unindex_item():
     assert len(table.index_map["x"]) == 1
     assert len(table.index_map["y"]) == 1
 
-    table = Table()
+    table = MemoryTable()
 
     table.insert(BadAndGoodObject(1))
     table.insert(BadAndGoodObject(3))
@@ -66,7 +66,7 @@ def test_table_unindex_item():
 
 
 def test_table_insert_objects():
-    table = Table()
+    table = MemoryTable()
 
     for i in range(10):
         table.insert(StandardTableObject(i, -i))
@@ -76,7 +76,7 @@ def test_table_insert_objects():
 
 
 def test_table_retrieve_well_formed_queries():
-    table = Table()
+    table = MemoryTable()
 
     for i in range(10):
         table.insert(StandardTableObject(i, -i))
@@ -138,7 +138,7 @@ def test_table_retrieve_well_formed_queries():
 
 
 def test_table_retrieve_bad_queries():
-    table = Table()
+    table = MemoryTable()
 
     for i in range(10):
         table.insert(StandardTableObject(i, -i))
@@ -160,7 +160,7 @@ def test_table_retrieve_bad_queries():
 
 
 def test_table_unused_indexes():
-    table = Table()
+    table = MemoryTable()
     table.insert(GoodObject(1))
     table.insert(GoodObject(2))
     table.delete(good_index=GoodIndex(1))

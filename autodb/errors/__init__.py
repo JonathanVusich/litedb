@@ -1,1 +1,1 @@
-from .errors import InvalidRange
+from .errors import InvalidRange, PathError
