@@ -1,4 +1,4 @@
-from os import scandir, listdir, DirEntry
+from os import scandir, listdir, DirEntry, path
 from typing import List, Generator, Tuple
 
 from ..errors import DatabaseNotFound
@@ -13,7 +13,15 @@ def dir_empty(directory: str) -> bool:
     return True
 
 
-def load_database(directory: str) -> Generator[Tuple[str, str, List[str]], None, None]:
+def has_class_map(directory: str) -> bool:
+    with scandir(path=directory) as curdir:
+        for entry in curdir:
+            if entry.name == "cmap":
+                return True
+    return False
+
+
+def load_tables(directory: str) -> Generator[Tuple[str, str, str, List[str]], None, None]:
     tables = 0
     with scandir(path=directory) as curdir:
         for entry in curdir:
@@ -24,17 +32,20 @@ def load_database(directory: str) -> Generator[Tuple[str, str, List[str]], None,
         raise DatabaseNotFound
 
 
-def retrieve_table_from_directory(directory: DirEntry) -> Tuple[str, str, List[str]]:
+def retrieve_table_from_directory(directory: DirEntry) -> Tuple[str, str, str, List[str]]:
     table_path = directory.path
     index = None
+    info_file = None
     shards = []
     with scandir(path=table_path) as curdir:
         for entry in curdir:
             if is_index_file(entry):
                 index = entry.path
+            elif is_info_file(entry):
+                info_file = entry.path
             elif is_shard_file(entry):
                 shards.append(entry.path)
-    return table_path, index, shards
+    return table_path, index, info_file, shards
 
 
 def is_table_folder(directory: DirEntry) -> bool:
@@ -53,6 +64,10 @@ def is_index_file(file: DirEntry) -> bool:
     return is_index(file.name) and file.is_file(follow_symlinks=False)
 
 
+def is_info_file(file: DirEntry) -> bool:
+    return is_info(file.name) and file.is_file(follow_symlinks=False)
+
+
 def is_shard(file_name: str) -> bool:
     return file_name.startswith("shard") and len(file_name) > 5 and file_name[5:].isdigit()
 
@@ -61,10 +76,27 @@ def is_index(file_name: str) -> bool:
     return file_name == "index"
 
 
+def is_info(file_name: str) -> bool:
+    return file_name == "info"
+
+
+def create_index_path(directory: str) -> str:
+    return path.join(directory, "index")
+
+
+def create_info_path(directory: str) -> str:
+    return path.join(directory, "info")
+
+
+def create_shard_path(directory: str, shard_number: int) -> str:
+    return f"""{path.join(directory, "shard")}{shard_number}"""
+
+
 def valid_table_contents(dir_path: str) -> bool:
     files = [file for file in listdir(dir_path)]
     index_files = [file for file in files if is_index(file)]
     shard_files = [file for file in files if is_shard(file)]
-    if len(index_files) < 1 or len(shard_files) < 1:
+    info_files = [file for file in files if is_info(file)]
+    if len(index_files) < 1 or len(shard_files) < 1 or len(info_files) < 1:
         return False
     return True

@@ -3,7 +3,7 @@ import tempfile
 import pytest
 
 from autodb.errors import DatabaseNotFound
-from autodb.utils.io_utils import dir_empty, load_database, is_shard, is_index, is_table, \
+from autodb.utils.io_utils import dir_empty, load_tables, is_shard, is_index, is_table, is_info, \
     valid_table_contents
 
 
@@ -21,16 +21,20 @@ def test_load_database_well_formed():
         index_path = os.path.join(table_dir, "index")
         with open(index_path, "wb"):
             pass
+        info_path = os.path.join(table_dir, "info")
+        with open(info_path, "wb"):
+            pass
         shard0_path = os.path.join(table_dir, "shard0")
         with open(shard0_path, "wb"):
             pass
-        tables = list(load_database(tempdir))
+        tables = list(load_tables(tempdir))
         assert len(tables) == 1
         table = tables[0]
         assert table[0] == table_dir
         assert table[1] == index_path
-        assert len(table[2]) == 1
-        assert table[2][0] == shard0_path
+        assert table[2] == info_path
+        assert len(table[3]) == 1
+        assert table[3][0] == shard0_path
 
 
 def test_load_database_with_junk_files():
@@ -44,6 +48,10 @@ def test_load_database_with_junk_files():
 
         index_path = os.path.join(table_dir, "index")
         with open(index_path, "wb"):
+            pass
+
+        info_path = os.path.join(table_dir, "info")
+        with open(info_path, "wb"):
             pass
 
         # Add junk index file
@@ -60,13 +68,14 @@ def test_load_database_with_junk_files():
         with open(os.path.join(table_dir, "shard2g"), "wb"):
             pass
 
-        tables = list(load_database(tempdir))
+        tables = list(load_tables(tempdir))
         assert len(tables) == 1
         table = tables[0]
         assert table[0] == table_dir
         assert table[1] == index_path
-        assert len(table[2]) == 1
-        assert table[2][0] == shard0_path
+        assert table[2] == info_path
+        assert len(table[3]) == 1
+        assert table[3][0] == shard0_path
 
 
 def test_load_database_no_database():
@@ -77,7 +86,7 @@ def test_load_database_no_database():
         with open(shard0_path, "wb"):
             pass
         with pytest.raises(DatabaseNotFound):
-            list(load_database(tempdir))
+            list(load_tables(tempdir))
 
 
 def test_is_table():
@@ -96,9 +105,16 @@ def test_is_index():
     assert not is_index("index1")
 
 
+def test_is_info():
+    assert is_info("info")
+    assert not is_info("info1")
+
+
 def test_is_valid_table_directory():
     with tempfile.TemporaryDirectory() as tempdir:
         with open(os.path.join(tempdir, "index"), "wb"):
+            pass
+        with open(os.path.join(tempdir, "info"), "wb"):
             pass
         with open(os.path.join(tempdir, "shard0"), "wb"):
             pass

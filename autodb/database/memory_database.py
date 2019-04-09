@@ -16,7 +16,7 @@ class MemoryDatabase(Database):
         return sum((len(table) for table in self.class_map.values()))
 
     def __repr__(self):
-        return "".join([f"{str(cls)}: size={self.class_map[cls].size}" for cls in self.class_map.values()])
+        return "".join([f"{str(cls)}: size={self.class_map[cls].size}\n" for cls in self.class_map.keys()])
 
     def insert(self, complex_object: object):
         class_type = type(complex_object)
