@@ -1,1 +1,1 @@
-from .errors import InvalidRange, PathError
+from .errors import InvalidRange, PathError, DatabaseNotFound
