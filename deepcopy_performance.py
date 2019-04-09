@@ -2,6 +2,7 @@ from copy import deepcopy
 from copy import copy
 from timeit import timeit
 import pickle
+import sys
 
 class A:
     def __init__(self):
@@ -28,11 +29,8 @@ class B:
 
 
 def main():
-    a = A()
-    b = B()
-    print(timeit('deepcopy(a)', globals={'deepcopy': deepcopy, 'a': a}, number=100000))
-    print(timeit('deepcopy(b)', globals={'deepcopy': deepcopy, 'b': b}, setup="from copy import deepcopy", number=100000))
-    print(timeit('pickle.loads(pickle.dumps(a))', globals={'pickle': pickle, 'a': a}, number=100000))
+    shard = [None] * 512
+    print(sys.getsizeof(shard))
 
 if __name__ == "__main__":
     main()

@@ -8,9 +8,8 @@ from ..index import Index
 from ..utils.io_utils import create_info_path, create_index_path, dir_empty
 from ..utils.object_utils import retrieve_possible_object_indexes
 from ..utils.serialization_utils import load_shard, load_table_index, load_table_info
+from ..shard import ShardManager
 
-SHARD_SIZE = 512
-MAX_SHARDS = 4
 
 
 class PersistentTable(Table):
@@ -20,7 +19,7 @@ class PersistentTable(Table):
     objects from the list.
     """
 
-    def __init__(self, directory: str = None, path_info: Tuple[str, str, str, List[str]] = None,
+    def __init__(self, directory: str = None, path_info: Tuple[str, str, str, Dict[int, str]] = None,
                  table_type=None) -> None:
         """
         This class can be instantiated as either a fresh new table or as an existing one from a file structure.
@@ -36,8 +35,9 @@ class PersistentTable(Table):
             self.directory = directory
             self.index_path = create_index_path(self.directory)
             self.info_path = create_info_path(self.directory)
-            self.shard_paths: Dict[int: str]
-            self.shards: Dict[int: Optional[List[bytes]]] = {}
+            shard_paths: Dict[int: str] = {}
+            shards: Dict[int: Optional[List[bytes]]] = {}
+            self.shard_manager = ShardManager(self.directory, shard_paths, shards)
             self.table_type = None
             self.size = 0
             self.unused_indexes: List[int] = []
@@ -47,8 +47,9 @@ class PersistentTable(Table):
             self.directory = path_info[0]
             self.index_path = path_info[1]
             self.info_path = path_info[2]
-            self.shard_paths = path_info[3]
-            self.shards: Dict[int: Optional[List[bytes]]] = {}
+            shard_paths = path_info[3]
+            shards: Dict[int: Optional[List[bytes]]] = {}
+            self.shard_manager = ShardManager(self.directory, shard_paths, shards)
             table_info = load_table_info(path_info[2])
             self.table_type = table_info["table_type"]
             self.size = table_info["size"]
@@ -66,7 +67,7 @@ class PersistentTable(Table):
         return self.size
 
     @classmethod
-    def from_file(cls, path_info: Tuple[str, str, str, List[str]]):
+    def from_file(cls, path_info: Tuple[str, str, str, Dict[int, str]]):
         return cls(path_info=path_info)
 
     @classmethod
@@ -82,67 +83,31 @@ class PersistentTable(Table):
     def insert(self, item: object) -> None:
         if len(self.unused_indexes) > 0:
             index = self.unused_indexes.pop()
-            self._insert_into_shard(item, index)
         else:
             index = self.size
-            self._insert_into_shard(item, index)
+            self.shard_manager.insert(item, index)
         self.size += 1
         self._index_item(item, index)
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
         if len(kwargs) == 0:
-            return (pickle.loads(item) for shard in self.shards.values() if shard is not None for item in shard)
+            return self.shard_manager.retrieve_all()
         indexes = self._retrieve(**kwargs)
         if indexes:
-            shard_indexes = [calculate_shard_number(index) for index in indexes]
-            shard_indexes.sort(key=lambda x: x[0])
-            for shard, index in shard_indexes:
-                if self.shards[shard] is None:
-                    self._load_shard(shard)
-                yield self.shards[shard][index]
+            return self.shard_manager.retrieve(indexes)
         else:
             return ([])
 
     def delete(self, **kwargs):
         indexes_to_delete = self._retrieve(**kwargs)
+        # Sort indexes for shards
+        indexes_to_delete = sorted(list(indexes_to_delete))
         if indexes_to_delete:
-            for index in indexes_to_delete:
-                self._delete(index)
-
-    def _insert_into_shard(self, item: object, index: int) -> None:
-        byte_repr = pickle.dumps(item, protocol=pickle.HIGHEST_PROTOCOL)
-        shard, shard_index = calculate_shard_number(index)
-        if index < self.size:
-            if shard in self.shards:
-                if self.shards[shard] is None:
-                    self._load_shard(shard)
-                self.shards[shard][shard_index] = byte_repr
-                self._set_shard_priority(shard)
-        else:
-            if shard in self.shards:
-                if self.shards[shard] is None:
-                    self._load_shard(shard)
-                self.shards[shard].append(byte_repr)
-                self._set_shard_priority(shard)
-            else:
-                if shard_index != 0:
-                    print("Error!")
-                self.shards.update({shard: [byte_repr]})
-                self._set_shard_priority(shard)
-
-    def _load_shard(self, shard_number: int) -> None:
-        self.shards[shard_number] = load_shard(self.shard_paths[shard_number])
-        self._set_shard_priority(shard_number)
-
-    def _set_shard_priority(self, shard_number: int):
-        if shard_number in self.shard_priority:
-            if self.shard_priority[0] == shard_number:
-                return
-            self.shard_priority.remove(shard_number)
-        self.shard_priority.appendleft(shard_number)
-        if len(self.shard_priority) > MAX_SHARDS:
-            shard_to_retire = self.shard_priority.pop()
-            self.shards[shard_to_retire] = None
+            items_to_delete = self.shard_manager.retrieve(indexes_to_delete)
+            for item, index in zip(items_to_delete, indexes_to_delete):
+                self._unindex_item(item, index)
+            self.unused_indexes.extend(indexes_to_delete)
+            self.shard_manager.delete(indexes_to_delete)
 
     def _index_item(self, item: object, index: int) -> None:
         """Inserts/creates index tables based on the given object."""
@@ -158,9 +123,8 @@ class PersistentTable(Table):
                 self.index_map.pop(var_name)
                 self.index_blacklist.add(var_name)
 
-    def _unindex_item(self, item: bytes, index: int) -> None:
+    def _unindex_item(self, item: object, index: int) -> None:
         """Removes indexes for the given object."""
-        item = pickle.loads(item, pickle.HIGHEST_PROTOCOL)
         indexes = retrieve_possible_object_indexes(item)
         for var_name, value in indexes.items():
             if var_name in self.index_blacklist:
@@ -209,5 +173,3 @@ class PersistentTable(Table):
         self.size -= 1
 
 
-def calculate_shard_number(index: int) -> Tuple[int, int]:
-    return index // SHARD_SIZE, index % SHARD_SIZE

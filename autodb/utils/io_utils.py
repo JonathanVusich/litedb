@@ -1,5 +1,5 @@
 from os import scandir, listdir, DirEntry, path
-from typing import List, Generator, Tuple
+from typing import List, Generator, Tuple, Dict
 
 from ..errors import DatabaseNotFound
 
@@ -32,11 +32,11 @@ def load_tables(directory: str) -> Generator[Tuple[str, str, str, List[str]], No
         raise DatabaseNotFound
 
 
-def retrieve_table_from_directory(directory: DirEntry) -> Tuple[str, str, str, List[str]]:
+def retrieve_table_from_directory(directory: DirEntry) -> Tuple[str, str, str, Dict[int, str]]:
     table_path = directory.path
     index = None
     info_file = None
-    shards = []
+    shards = {}
     with scandir(path=table_path) as curdir:
         for entry in curdir:
             if is_index_file(entry):
@@ -44,7 +44,7 @@ def retrieve_table_from_directory(directory: DirEntry) -> Tuple[str, str, str, L
             elif is_info_file(entry):
                 info_file = entry.path
             elif is_shard_file(entry):
-                shards.append(entry.path)
+                shards.update({get_shard_number(entry.name): entry.path})
     return table_path, index, info_file, shards
 
 
@@ -90,6 +90,10 @@ def create_info_path(directory: str) -> str:
 
 def create_shard_path(directory: str, shard_number: int) -> str:
     return f"""{path.join(directory, "shard")}{shard_number}"""
+
+
+def get_shard_number(file_name: str) -> int:
+    return int(file_name[5:])
 
 
 def valid_table_contents(dir_path: str) -> bool:
