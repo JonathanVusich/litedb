@@ -1,1 +1,1 @@
-from .shard_manager import ShardManager
+from .manager import ShardManager

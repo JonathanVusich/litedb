@@ -1,15 +1,15 @@
 import pickle
 from typing import List, Dict, Set, Optional, Generator, Tuple
 from collections import deque
+from sortedcontainers import SortedList
 
 from .table import Table
 from ..errors import InvalidRange, PathError
 from ..index import Index
 from ..utils.io_utils import create_info_path, create_index_path, dir_empty
 from ..utils.object_utils import retrieve_possible_object_indexes
-from ..utils.serialization_utils import load_shard, load_table_index, load_table_info
+from ..utils.serialization_utils import load_table_index, load_table_info
 from ..shard import ShardManager
-
 
 
 class PersistentTable(Table):
@@ -36,11 +36,10 @@ class PersistentTable(Table):
             self.index_path = create_index_path(self.directory)
             self.info_path = create_info_path(self.directory)
             shard_paths: Dict[int: str] = {}
-            shards: Dict[int: Optional[List[bytes]]] = {}
-            self.shard_manager = ShardManager(self.directory, shard_paths, shards)
+            self.shard_manager = ShardManager(self.directory, shard_paths)
             self.table_type = None
             self.size = 0
-            self.unused_indexes: List[int] = []
+            self.unused_indexes: SortedList[int] = SortedList()
             self.index_blacklist: Set[str] = set()
             self.index_map: Dict[str, Index] = {}
         elif path_info is not None and directory is None and table_type is None:
@@ -48,8 +47,7 @@ class PersistentTable(Table):
             self.index_path = path_info[1]
             self.info_path = path_info[2]
             shard_paths = path_info[3]
-            shards: Dict[int: Optional[List[bytes]]] = {}
-            self.shard_manager = ShardManager(self.directory, shard_paths, shards)
+            self.shard_manager = ShardManager(self.directory, shard_paths)
             table_info = load_table_info(path_info[2])
             self.table_type = table_info["table_type"]
             self.size = table_info["size"]
@@ -164,11 +162,8 @@ class PersistentTable(Table):
             return indexes
 
     def _delete(self, object_index: int) -> None:
-        shard, index = calculate_shard_number(object_index)
-        if self.shards[shard] is None:
-            self._load_shard(shard)
-        self._unindex_item(self.shards[shard][index], object_index)
-        self.shards[shard][index] = None
+        self._unindex_item(self.shard_manager.retrieve((object_index,)), object_index)
+        self.shard_manager.delete((object_index,))
         self.unused_indexes.append(object_index)
         self.size -= 1
 
