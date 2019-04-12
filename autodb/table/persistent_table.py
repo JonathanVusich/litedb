@@ -7,7 +7,6 @@ from .table import Table
 from ..errors import InvalidRange, PathError
 from ..index import Index
 from ..utils.io_utils import create_info_path, create_index_path, dir_empty
-from ..utils.object_utils import retrieve_possible_object_indexes
 from ..utils.serialization_utils import load_table_index, load_table_info
 from ..shard import ShardManager
 
@@ -40,8 +39,6 @@ class PersistentTable(Table):
             self.table_type = None
             self.size = 0
             self.unused_indexes: SortedList[int] = SortedList()
-            self.index_blacklist: Set[str] = set()
-            self.index_map: Dict[str, Index] = {}
         elif path_info is not None and directory is None and table_type is None:
             self.directory = path_info[0]
             self.index_path = path_info[1]
@@ -106,28 +103,6 @@ class PersistentTable(Table):
                 self._unindex_item(item, index)
             self.unused_indexes.extend(indexes_to_delete)
             self.shard_manager.delete(indexes_to_delete)
-
-    def _index_item(self, item: object, index: int) -> None:
-        """Inserts/creates index tables based on the given object."""
-        indexes = retrieve_possible_object_indexes(item)
-        for var_name, value in indexes.items():
-            if var_name in self.index_blacklist:
-                continue
-            if var_name not in self.index_map:
-                self.index_map.update({var_name: Index(type(value))})
-            try:
-                self.index_map[var_name].add(value, index)
-            except TypeError:
-                self.index_map.pop(var_name)
-                self.index_blacklist.add(var_name)
-
-    def _unindex_item(self, item: object, index: int) -> None:
-        """Removes indexes for the given object."""
-        indexes = retrieve_possible_object_indexes(item)
-        for var_name, value in indexes.items():
-            if var_name in self.index_blacklist:
-                continue
-            self.index_map[var_name].destroy(value, index)
 
     def _retrieve(self, **kwargs) -> Optional[Set[int]]:
         indexes: Set[int] = set()

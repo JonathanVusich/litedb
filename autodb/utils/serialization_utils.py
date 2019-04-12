@@ -1,5 +1,6 @@
 import pickle
-from typing import List, Dict
+import os
+from typing import List, Dict, Optional
 
 from ..index import Index
 
@@ -12,14 +13,26 @@ def deserialize(raw_data: bytes) -> object:
     return pickle.loads(raw_data)
 
 
-def load_table_index(index_path: str) -> Dict[str, Index]:
+def load_table_index(index_path: str) -> Optional[Dict[str, Index]]:
     """
-    This function returns a deserialized index map and the filenames of
-    the existing table shards.
+    This function returns a deserialized index map and index blacklist.
     :param index_path:
     :return:
     """
-    return pickle.load(index_path)
+    if os.path.exists(index_path):
+        with open(index_path, "rb") as f:
+            return pickle.load(f)
+
+
+def dump_table_index(index_path: str, index_info: dict) -> None:
+    """
+    This function dumps a dictionary of index info to the given index path.
+    :param index_path:
+    :param index_info:
+    :return:
+    """
+    with open(index_path, "wb") as f:
+        pickle.dump(index_info, f)
 
 
 def load_shard(shard_path: str) -> List[bytes]:
