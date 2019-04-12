@@ -1,9 +1,10 @@
 from typing import Dict, Tuple, Generator, Iterable
+from sortedcontainers import SortedDict
 
 from ..utils.serialization_utils import serialize, deserialize
 from .buffer import ShardBuffer
 
-SHARD_SIZE = 12
+SHARD_SIZE = 512
 
 
 class ShardManager:
@@ -17,7 +18,7 @@ class ShardManager:
         :param indexes:
         :return:
         """
-        ds = deserialize # For faster local lookup
+        ds = deserialize  # For faster local lookup
         shard_indexes = [calculate_shard_number(index) for index in indexes]
         shard_indexes.sort(key=lambda x: x[0])
         for shard, index in shard_indexes:
@@ -33,10 +34,14 @@ class ShardManager:
             for byte in filter(lambda x: x is not None, shard):
                 yield ds(byte)
 
-    def insert(self, item: object, index: int) -> None:
-        item = serialize(item)
-        shard, index = calculate_shard_number(index)
-        self.buffer[shard][index] = item
+    def insert(self, items: SortedDict) -> None:
+        sl = serialize  # local for faster performance
+        prepped_items = SortedDict()
+        for key, value in items.items():
+            prepped_items[calculate_shard_number(key)] = sl(value)
+        for shard_index, value in prepped_items.items():
+            shard, index = shard_index
+            self.buffer[shard][index] = value
 
     def delete(self, indexes: Iterable[int]) -> None:
         shard_indexes = [calculate_shard_number(index) for index in indexes]
