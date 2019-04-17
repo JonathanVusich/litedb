@@ -1,4 +1,5 @@
 from autodb.shard.buffer import ShardBuffer
+from autodb.utils.serialization_utils import dump_shard, load_shard
 from collections import deque
 import pytest
 import pickle
@@ -9,8 +10,8 @@ def buffer(tmpdir):
     temp_directory = tmpdir.mkdir("table")
     table_dir = str(temp_directory)
     paths = {0: str(temp_directory.join("shard0"))}
-    with open(temp_directory.join("shard0"), "wb") as f:
-        pickle.dump([None] * 512, f, pickle.HIGHEST_PROTOCOL)
+    shard = [None] * 512
+    dump_shard(temp_directory.join("shard0"), shard)
     buffer = ShardBuffer(table_dir, paths)
     return buffer
 
@@ -94,7 +95,8 @@ def test_buffer_free_shard(buffer):
     buffer._free_shard(0)
     shard_dir = buffer.shard_paths[0]
     with open(shard_dir, "rb") as f:
-        file_shard = pickle.load(f)
+        checksum = f.read(4)
+        file_shard = pickle.loads(f.read())
     assert file_shard == empty_shard
     assert 0 not in buffer.loaded_shards
     assert len(buffer.loaded_shards) == 0
