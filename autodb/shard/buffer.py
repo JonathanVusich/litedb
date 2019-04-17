@@ -1,8 +1,10 @@
 from typing import List, Dict, Tuple, Union, Optional
 import os
+import pickle
 from .queue import ShardMRU
 
-from ..utils.serialization_utils import load_shard, dump_shard, serialize, deserialize
+from ..utils.serialization_utils import load_shard, dump_shard, serialize, deserialize, get_checksum
+from ..utils.checksum_utils import checksum
 
 SHARD_SIZE = 512
 
@@ -62,7 +64,19 @@ class ShardBuffer:
             self.loaded_shards.pop(shard)
 
     def _persist_shard(self, shard: int) -> None:
+        if not self._shard_has_changes(shard):
+            return
         if shard in self.loaded_shards:
             shard_path = self.shard_paths[shard]
             shard_data = self.loaded_shards[shard]
             dump_shard(shard_path, shard_data)
+
+    def _calculate_checksum(self, shard: int) -> int:
+        if not shard in self.loaded_shards:
+            raise ValueError("Cannot calculate checksum of persisted shard!")
+        pickled_shard = pickle.dumps(self.loaded_shards[shard], pickle.HIGHEST_PROTOCOL)
+        return checksum(pickled_shard)
+
+    def _shard_has_changes(self, shard: int) -> bool:
+        saved_checksum = get_checksum(self.shard_paths[shard])
+        return not saved_checksum == self._calculate_checksum(shard)
