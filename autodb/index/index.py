@@ -13,6 +13,12 @@ class Index:
         self.none_indexes: Set[int] = set()
         self.index_type = index_type
 
+    def __eq__(self, other):
+        if isinstance(other, Index):
+            return self.none_indexes == other.none_indexes and self.indexes == other.indexes and self.index_type == other.index_type
+        else:
+            raise NotImplementedError
+
     def __len__(self):
         return len(self.indexes) + len(self.none_indexes)
 
@@ -64,6 +70,12 @@ class Index:
         return return_set
 
     def destroy(self, value, index: int) -> None:
+        """
+        Removes an index from the database depending on the value of the tracked value.
+        :param value:
+        :param index:
+        :return:
+        """
         if value is None:
             self.none_indexes.remove(index)
             return
