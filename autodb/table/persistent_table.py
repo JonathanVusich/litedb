@@ -5,7 +5,7 @@ from sortedcontainers import SortedList
 
 from .table import Table
 from ..errors import InvalidRange, PathError
-from ..index import Index
+from ..index import Index, IndexManager
 from ..utils.io_utils import create_info_path, create_index_path, dir_empty
 from ..utils.serialization_utils import load_table_index, load_table_info
 from ..shard import ShardManager
@@ -36,6 +36,7 @@ class PersistentTable(Table):
             self.info_path = create_info_path(self.directory)
             shard_paths: Dict[int: str] = {}
             self.shard_manager = ShardManager(self.directory, shard_paths)
+            self.index_manager = IndexManager(self.index_path)
             self.table_type = None
             self.size = 0
             self.unused_indexes: SortedList[int] = SortedList()
@@ -45,6 +46,7 @@ class PersistentTable(Table):
             self.info_path = path_info[2]
             shard_paths = path_info[3]
             self.shard_manager = ShardManager(self.directory, shard_paths)
+            self.index_manager = IndexManager(self.index_path)
             table_info = load_table_info(path_info[2])
             self.table_type = table_info["table_type"]
             self.size = table_info["size"]
@@ -53,7 +55,6 @@ class PersistentTable(Table):
             self.index_map: Dict[str, Index] = load_table_index(self.index_path)
         else:
             raise AttributeError
-        self.shard_priority = deque()
 
     def __repr__(self):
         return f"Table(size={self.size})"
@@ -70,10 +71,9 @@ class PersistentTable(Table):
         return cls(directory=directory, table_type=table_type)
 
     def serialize_table(self):
-        table_info = {"table_type": self.table_type, "size": self.size, "unused_indexes": self.unused_indexes,
-                      "index_blacklist": self.index_blacklist}
+        table_info = {"table_type": self.table_type, "size": self.size, "unused_indexes": self.unused_indexes}
         pickle.dump(table_info, self.info_path)
-        pickle.dump(self.index_path, self.index_map)
+        self.shard_manager
 
     def insert(self, item: object) -> None:
         if len(self.unused_indexes) > 0:
@@ -85,6 +85,7 @@ class PersistentTable(Table):
         self._index_item(item, index)
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
+
         if len(kwargs) == 0:
             return self.shard_manager.retrieve_all()
         indexes = self._retrieve(**kwargs)
@@ -92,6 +93,9 @@ class PersistentTable(Table):
             return self.shard_manager.retrieve(indexes)
         else:
             return ([])
+
+    def retrieve_valid_indexes(self) -> List[str]:
+        return [index for index in self.index_manager.index_map]
 
     def delete(self, **kwargs):
         indexes_to_delete = self._retrieve(**kwargs)
@@ -103,38 +107,6 @@ class PersistentTable(Table):
                 self._unindex_item(item, index)
             self.unused_indexes.extend(indexes_to_delete)
             self.shard_manager.delete(indexes_to_delete)
-
-    def _retrieve(self, **kwargs) -> Optional[Set[int]]:
-        indexes: Set[int] = set()
-        for x, key in enumerate(kwargs.keys()):
-            if key in self.index_blacklist or key not in self.index_map:
-                raise IndexError(f"{key} is not a valid index!")
-            index = self.index_map[key]
-            if len(index) == 0:
-                continue
-            value = kwargs[key]
-            if isinstance(value, tuple):
-                if len(value) != 2:
-                    raise InvalidRange
-                low, high = value
-                if low is not None and not isinstance(low, index.index_type):
-                    raise ValueError(f"The low value of \"{key}\" must be of type {index.index_type}")
-                if high is not None and not isinstance(high, index.index_type):
-                    raise ValueError(f"The high value of \"{key}\" must be of type {index.index_type}")
-                if x == 0:
-                    indexes.update(index.retrieve_range(low, high))
-                else:
-                    indexes.intersection_update(index.retrieve_range(low, high))
-            else:
-                if value is not None and not isinstance(value, index.index_type):
-                    raise ValueError(f"\"{key}\" must be of type {index.index_type}")
-                results = index.retrieve(value)
-                if x == 0:
-                    indexes.update(results)
-                else:
-                    indexes.intersection_update(results)
-        if len(indexes) > 0:
-            return indexes
 
     def _delete(self, object_index: int) -> None:
         self._unindex_item(self.shard_manager.retrieve((object_index,)), object_index)
