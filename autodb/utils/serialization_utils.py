@@ -3,8 +3,6 @@ import os
 from typing import List, Dict, Optional
 from .checksum_utils import checksum
 
-from ..index import Index
-
 
 def serialize(item: object) -> bytes:
     return pickle.dumps(item, pickle.HIGHEST_PROTOCOL)
@@ -14,7 +12,7 @@ def deserialize(raw_data: bytes) -> object:
     return pickle.loads(raw_data)
 
 
-def load_table_index(index_path: str) -> Optional[Dict[str, Index]]:
+def load_table_index(index_path: str) -> Optional[Dict[str, object]]:
     """
     This function returns a deserialized index map and index blacklist.
     :param index_path:
@@ -44,7 +42,8 @@ def load_shard(shard_path: str) -> List[bytes]:
     """
     with open(shard_path, "rb") as file:
         file.read(4)
-        return pickle.loads(file.read())
+        pickle_data = file.read()
+        return pickle.loads(pickle_data)
 
 
 def dump_shard(shard_path: str, shard: List[bytes]) -> None:
@@ -56,13 +55,14 @@ def dump_shard(shard_path: str, shard: List[bytes]) -> None:
     """
     pickled_shard = pickle.dumps(shard, pickle.HIGHEST_PROTOCOL)
     with open(shard_path, "wb") as file:
-        file.write(bytes(checksum(pickled_shard)))
+        chksum = checksum(pickled_shard)
+        file.write(chksum)
         file.write(pickled_shard)
 
 
-def get_checksum(shard_path: str) -> int:
+def get_checksum(shard_path: str) -> bytes:
     with open(shard_path, "rb") as file:
-        chksum = int(file.read(4))
+        chksum = file.read(4)
     return chksum
 
 
