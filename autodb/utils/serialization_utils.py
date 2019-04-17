@@ -1,6 +1,7 @@
 import pickle
 import os
 from typing import List, Dict, Optional
+from .checksum_utils import checksum
 
 from ..index import Index
 
@@ -42,7 +43,8 @@ def load_shard(shard_path: str) -> List[bytes]:
     :return:
     """
     with open(shard_path, "rb") as file:
-        return pickle.load(file)
+        file.read(4)
+        return pickle.loads(file.read())
 
 
 def dump_shard(shard_path: str, shard: List[bytes]) -> None:
@@ -52,8 +54,16 @@ def dump_shard(shard_path: str, shard: List[bytes]) -> None:
     :param shard_path:
     :return:
     """
+    pickled_shard = pickle.dumps(shard, pickle.HIGHEST_PROTOCOL)
     with open(shard_path, "wb") as file:
-        pickle.dump(shard, file, pickle.HIGHEST_PROTOCOL)
+        file.write(bytes(checksum(pickled_shard)))
+        file.write(pickled_shard)
+
+
+def get_checksum(shard_path: str) -> int:
+    with open(shard_path, "rb") as file:
+        chksum = int(file.read(4))
+    return chksum
 
 
 def load_table_info(info_path: str) -> dict:
