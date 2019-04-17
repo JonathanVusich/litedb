@@ -1,7 +1,8 @@
 from .index import Index
+from ..errors import InvalidRange
 from ..utils.object_utils import retrieve_possible_object_indexes
 from ..utils.serialization_utils import load_table_index, dump_table_index
-from typing import Set
+from typing import Set, Optional
 
 
 class IndexManager:
@@ -43,3 +44,35 @@ class IndexManager:
         indexes = retrieve_possible_object_indexes(item)
         for var_name, value in indexes.items():
             self.index_map[var_name].destroy(value, index)
+
+    def retrieve(self, **kwargs) -> Optional[Set[int]]:
+        indexes: Set[int] = set()
+        for x, key in enumerate(kwargs.keys()):
+            if key in self.index_blacklist or key not in self.index_map:
+                raise IndexError(f"{key} is not a valid index!")
+            index = self.index_map[key]
+            if len(index) == 0:
+                continue
+            value = kwargs[key]
+            if isinstance(value, tuple):
+                if len(value) != 2:
+                    raise InvalidRange
+                low, high = value
+                if low is not None and not isinstance(low, index.index_type):
+                    raise ValueError(f"The low value of \"{key}\" must be of type {index.index_type}")
+                if high is not None and not isinstance(high, index.index_type):
+                    raise ValueError(f"The high value of \"{key}\" must be of type {index.index_type}")
+                if x == 0:
+                    indexes.update(index.retrieve_range(low, high))
+                else:
+                    indexes.intersection_update(index.retrieve_range(low, high))
+            else:
+                if value is not None and not isinstance(value, index.index_type):
+                    raise ValueError(f"\"{key}\" must be of type {index.index_type}")
+                results = index.retrieve(value)
+                if x == 0:
+                    indexes.update(results)
+                else:
+                    indexes.intersection_update(results)
+        if len(indexes) > 0:
+            return indexes
