@@ -71,12 +71,14 @@ class ShardBuffer:
             shard_data = self.loaded_shards[shard]
             dump_shard(shard_path, shard_data)
 
-    def _calculate_checksum(self, shard: int) -> int:
-        if not shard in self.loaded_shards:
+    def _calculate_checksum(self, shard: int) -> bytes:
+        if shard not in self.loaded_shards:
             raise ValueError("Cannot calculate checksum of persisted shard!")
         pickled_shard = pickle.dumps(self.loaded_shards[shard], pickle.HIGHEST_PROTOCOL)
         return checksum(pickled_shard)
 
     def _shard_has_changes(self, shard: int) -> bool:
-        saved_checksum = get_checksum(self.shard_paths[shard])
-        return not saved_checksum == self._calculate_checksum(shard)
+        if os.path.exists(self.shard_paths[shard]):
+            saved_checksum = get_checksum(self.shard_paths[shard])
+            return not saved_checksum == self._calculate_checksum(shard)
+        return True
