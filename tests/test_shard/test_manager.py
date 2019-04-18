@@ -1,8 +1,7 @@
 from autodb.shard.manager import ShardManager
 from sortedcontainers import SortedDict
-from autodb.utils.serialization_utils import deserialize
+from autodb.utils.serialization_utils import serialize, deserialize, dump_shard
 import pytest
-import pickle
 
 
 @pytest.fixture()
@@ -10,8 +9,9 @@ def shard_manager(tmpdir):
     temp_directory = tmpdir.mkdir("table")
     table_dir = str(temp_directory)
     paths = {0: str(temp_directory.join("shard0"))}
-    with open(temp_directory.join("shard0"), "wb") as f:
-        pickle.dump([None] * 512, f, pickle.HIGHEST_PROTOCOL)
+    s = serialize
+    shard = [s(item) for item in ([None] * 512)]
+    dump_shard(temp_directory.join("shard0"), shard)
     return ShardManager(table_dir, paths)
 
 
