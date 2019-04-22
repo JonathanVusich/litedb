@@ -3,15 +3,8 @@ import tempfile
 import pytest
 
 from autodb.errors import DatabaseNotFound
-from autodb.utils.path import dir_empty, load_tables, is_shard, is_index, is_table, is_info, \
+from autodb.utils.path import load_tables, is_shard, is_index, is_table, is_info, \
     valid_table_contents
-
-
-def test_dir_empty():
-    with tempfile.TemporaryDirectory() as tempdir:
-        with tempfile.NamedTemporaryFile(dir=tempdir) as tmp:
-            assert not dir_empty(tempdir)
-        assert dir_empty(tempdir)
 
 
 def test_load_database_well_formed():
