@@ -1,7 +1,7 @@
 from typing import Dict, Tuple, Generator, Iterable
 from sortedcontainers import SortedDict
 
-from ..utils.serialization_utils import serialize, deserialize
+from ..utils.serialization import serialize, deserialize
 from .buffer import ShardBuffer
 
 SHARD_SIZE = 512
@@ -42,12 +42,14 @@ class ShardManager:
         for shard_index, value in prepped_items.items():
             shard, index = shard_index
             self.buffer[shard][index] = value
+        self.buffer.commit()
 
     def delete(self, indexes: Iterable[int]) -> None:
         shard_indexes = [calculate_shard_number(index) for index in indexes]
         shard_indexes.sort(key=lambda x: x[0])
         for shard, index in shard_indexes:
             self.buffer[shard][index] = None
+        self.buffer.commit()
 
 
 def calculate_shard_number(index: int) -> Tuple[int, int]:

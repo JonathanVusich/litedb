@@ -1,29 +1,32 @@
 from .index import Index
 from ..errors import InvalidRange
-from ..utils.object_utils import retrieve_possible_object_indexes
-from ..utils.serialization_utils import load_table_index, dump_table_index
+from ..utils.index import retrieve_possible_object_indexes
+from ..utils.serialization import dump, load
 from typing import Set, Optional
+import os
 
 
 class IndexManager:
 
     def __init__(self, index_path: str) -> None:
         self.index_path = index_path
+        self.blacklist_path = os.path.join(self.index_path, "blacklist")
+        self.map_path = os.path.join(self.index_path, "map")
         self.index_blacklist: Set[str] = set()
         self.index_map = {}
         self.load()
 
     def load(self) -> None:
-        index_info = load_table_index(self.index_path)
-        if index_info is not None:
-            self.index_map = index_info["map"]
-            self.index_blacklist = index_info["blacklist"]
+        index_map = load(self.map_path)
+        if index_map is not None:
+            self.index_map = index_map
+        blacklist = load(self.blacklist_path)
+        if blacklist is not None:
+            self.index_blacklist = blacklist
 
     def persist(self) -> None:
-        index_info = {}
-        index_info.update({"map": self.index_map})
-        index_info.update({"blacklist": self.index_blacklist})
-        dump_table_index(self.index_path, index_info)
+        dump(self.blacklist_path, self.index_blacklist)
+        dump(self.map_path, self.index_map)
 
     def index_item(self, item: object, index: int) -> None:
         """Inserts/creates index tables based on the given object."""

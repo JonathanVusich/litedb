@@ -1,6 +1,6 @@
 from autodb.shard.manager import ShardManager
 from sortedcontainers import SortedDict
-from autodb.utils.serialization_utils import serialize, deserialize, dump_shard
+from autodb.utils.serialization import serialize, deserialize, dump
 import pytest
 
 
@@ -11,7 +11,7 @@ def shard_manager(tmpdir):
     paths = {0: str(temp_directory.join("shard0"))}
     s = serialize
     shard = [s(item) for item in ([None] * 512)]
-    dump_shard(temp_directory.join("shard0"), shard)
+    dump(temp_directory.join("shard0"), shard)
     return ShardManager(table_dir, paths)
 
 

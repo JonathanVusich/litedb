@@ -1,14 +1,13 @@
-import pickle
-from typing import List, Dict, Set, Optional, Generator, Tuple
-from collections import deque
-from sortedcontainers import SortedList
+import os
+from typing import List, Dict, Generator, Tuple
+
+from sortedcontainers import SortedList, SortedDict
 
 from .table import Table
-from ..errors import InvalidRange, PathError
-from ..index import Index, IndexManager
-from ..utils.io_utils import create_info_path, create_index_path, dir_empty
-from ..utils.serialization_utils import load_table_index, load_table_info
+from ..index import IndexManager
 from ..shard import ShardManager
+from ..utils.path import create_info_path, create_index_path
+from ..utils.serialization import load, dump
 
 
 class PersistentTable(Table):
@@ -29,15 +28,13 @@ class PersistentTable(Table):
         :param table_type:
         """
         if path_info is None and directory is not None and table_type is not None:
-            if not dir_empty(directory):
-                raise PathError("Tables should always be instantiated to an empty directory!")
             self.directory = directory
             self.index_path = create_index_path(self.directory)
             self.info_path = create_info_path(self.directory)
             shard_paths: Dict[int: str] = {}
             self.shard_manager = ShardManager(self.directory, shard_paths)
             self.index_manager = IndexManager(self.index_path)
-            self.table_type = None
+            self.table_type = table_type
             self.size = 0
             self.unused_indexes: SortedList[int] = SortedList()
         elif path_info is not None and directory is None and table_type is None:
@@ -47,12 +44,9 @@ class PersistentTable(Table):
             shard_paths = path_info[3]
             self.shard_manager = ShardManager(self.directory, shard_paths)
             self.index_manager = IndexManager(self.index_path)
-            table_info = load_table_info(path_info[2])
-            self.table_type = table_info["table_type"]
-            self.size = table_info["size"]
-            self.unused_indexes: List[int] = table_info["unused_indexes"]
-            self.index_blacklist: Set[str] = table_info["index_blacklist"]
-            self.index_map: Dict[str, Index] = load_table_index(self.index_path)
+            self.table_type = load(os.path.join(self.info_path, "table_type"))
+            self.size = load(os.path.join(self.info_path, "size"))
+            self.unused_indexes: List[int] = load(os.path.join(self.info_path, "unused_indexes"))
         else:
             raise AttributeError
 
@@ -70,25 +64,29 @@ class PersistentTable(Table):
     def new(cls, directory: str, table_type):
         return cls(directory=directory, table_type=table_type)
 
-    def serialize_table(self):
-        table_info = {"table_type": self.table_type, "size": self.size, "unused_indexes": self.unused_indexes}
-        pickle.dump(table_info, self.info_path)
-        self.shard_manager
+    def persist(self):
+        dump(os.path.join(self.info_path, "table_type"), self.table_type)
+        dump(os.path.join(self.info_path, "size"), self.size)
+        dump(os.path.join(self.info_path, "unused_indexes"), self.unused_indexes)
+        self.index_manager.persist()
 
     def insert(self, item: object) -> None:
         if len(self.unused_indexes) > 0:
             index = self.unused_indexes.pop()
         else:
             index = self.size
-            self.shard_manager.insert(item, index)
+            item_dict = SortedDict()
+            item_dict[index] = item
+            self.shard_manager.insert(item_dict)
         self.size += 1
-        self._index_item(item, index)
+        self.index_manager.index_item(item, index)
+        self.persist()
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
 
         if len(kwargs) == 0:
             return self.shard_manager.retrieve_all()
-        indexes = self._retrieve(**kwargs)
+        indexes = self.index_manager.retrieve(**kwargs)
         if indexes:
             return self.shard_manager.retrieve(indexes)
         else:
@@ -98,18 +96,18 @@ class PersistentTable(Table):
         return [index for index in self.index_manager.index_map]
 
     def delete(self, **kwargs):
-        indexes_to_delete = self._retrieve(**kwargs)
+        indexes_to_delete = self.index_manager.retrieve(**kwargs)
         # Sort indexes for shards
         indexes_to_delete = sorted(list(indexes_to_delete))
         if indexes_to_delete:
             items_to_delete = self.shard_manager.retrieve(indexes_to_delete)
             for item, index in zip(items_to_delete, indexes_to_delete):
-                self._unindex_item(item, index)
+                self.index_manager.unindex_item(item, index)
             self.unused_indexes.extend(indexes_to_delete)
             self.shard_manager.delete(indexes_to_delete)
 
     def _delete(self, object_index: int) -> None:
-        self._unindex_item(self.shard_manager.retrieve((object_index,)), object_index)
+        self.index_manager.unindex_item(self.shard_manager.retrieve((object_index,)), object_index)
         self.shard_manager.delete((object_index,))
         self.unused_indexes.append(object_index)
         self.size -= 1

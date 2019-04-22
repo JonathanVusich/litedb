@@ -3,7 +3,7 @@ import tempfile
 import pytest
 
 from autodb.errors import DatabaseNotFound
-from autodb.utils.io_utils import dir_empty, load_tables, is_shard, is_index, is_table, is_info, \
+from autodb.utils.path import dir_empty, load_tables, is_shard, is_index, is_table, is_info, \
     valid_table_contents
 
 

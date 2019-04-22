@@ -3,7 +3,7 @@ from typing import List, Set, Dict, Optional, Generator
 
 from ..errors import InvalidRange
 from ..index import Index
-from ..utils.object_utils import retrieve_possible_object_indexes
+from ..utils.index import retrieve_possible_object_indexes
 from .table import Table
 
 

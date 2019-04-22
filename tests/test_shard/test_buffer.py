@@ -1,5 +1,5 @@
 from autodb.shard.buffer import ShardBuffer
-from autodb.utils.serialization_utils import dump_shard, load_shard
+from autodb.utils.serialization import dump, load
 from collections import deque
 import pytest
 import pickle
@@ -11,7 +11,7 @@ def buffer(tmpdir):
     table_dir = str(temp_directory)
     paths = {0: str(temp_directory.join("shard0"))}
     shard = [None] * 512
-    dump_shard(temp_directory.join("shard0"), shard)
+    dump(temp_directory.join("shard0"), shard)
     buffer = ShardBuffer(table_dir, paths)
     return buffer
 

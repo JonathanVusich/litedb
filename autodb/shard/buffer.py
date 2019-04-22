@@ -3,8 +3,8 @@ import os
 import pickle
 from .queue import ShardMRU
 
-from ..utils.serialization_utils import load_shard, dump_shard, serialize, deserialize, get_checksum
-from ..utils.checksum_utils import checksum
+from ..utils.serialization import load, dump, serialize, deserialize, get_checksum
+from ..utils.checksum import checksum
 
 SHARD_SIZE = 512
 
@@ -53,7 +53,7 @@ class ShardBuffer:
             self._free_shard(shard_to_persist)
         if shard_index not in self.loaded_shards:
             if shard_index in self.shard_paths:
-                self.loaded_shards.update({shard_index: load_shard(self.shard_paths[shard_index])})
+                self.loaded_shards.update({shard_index: load(self.shard_paths[shard_index])})
             else:
                 self.loaded_shards.update({shard_index: [None] * SHARD_SIZE})
                 self.shard_paths.update({shard_index: self._create_new_shard_path()})
@@ -69,7 +69,7 @@ class ShardBuffer:
         if shard in self.loaded_shards:
             shard_path = self.shard_paths[shard]
             shard_data = self.loaded_shards[shard]
-            dump_shard(shard_path, shard_data)
+            dump(shard_path, shard_data)
 
     def _calculate_checksum(self, shard: int) -> bytes:
         if shard not in self.loaded_shards:
@@ -82,3 +82,7 @@ class ShardBuffer:
             saved_checksum = get_checksum(self.shard_paths[shard])
             return not saved_checksum == self._calculate_checksum(shard)
         return True
+
+    def commit(self) -> None:
+        for shard in self.loaded_shards:
+            self._persist_shard(shard)

@@ -4,24 +4,7 @@ from typing import List, Generator, Tuple, Dict
 from ..errors import DatabaseNotFound
 
 
-def dir_empty(directory: str) -> bool:
-    # Check that the path is an empty directory
-    with scandir(path=directory) as curdir:
-        for entry in curdir:
-            if entry.is_file(follow_symlinks=False) or entry.is_dir(follow_symlinks=False):
-                return False
-    return True
-
-
-def has_class_map(directory: str) -> bool:
-    with scandir(path=directory) as curdir:
-        for entry in curdir:
-            if entry.name == "cmap":
-                return True
-    return False
-
-
-def load_tables(directory: str) -> Generator[Tuple[str, str, str, List[str]], None, None]:
+def load_tables(directory: str) -> Generator[Tuple[str, str, str, Dict[int, str]], None, None]:
     tables = 0
     with scandir(path=directory) as curdir:
         for entry in curdir:
