@@ -36,8 +36,11 @@ def dump(path: str, item: object) -> None:
     """
     pickled_data = pickle.dumps(item, pickle.HIGHEST_PROTOCOL)
     chksum = checksum(pickled_data)
-    if chksum == get_checksum(path):
-        return
+    try:
+        if chksum == get_checksum(path):
+            return
+    except PathError:
+        pass
     with open(path, "wb") as file:
         file.write(chksum)
         file.write(pickled_data)
