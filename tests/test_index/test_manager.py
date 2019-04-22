@@ -1,6 +1,7 @@
 import pytest
 from autodb.index.manager import IndexManager
 from autodb.index.index import Index
+from autodb.utils.serialization import dump, load
 import pickle
 from ..test_table.table_test_objects import StandardTableObject, BadObject
 from autodb.errors import InvalidRange
@@ -28,22 +29,24 @@ def test_no_index_file_init(table_dir, index_manager):
     assert index_manager.index_map == {}
 
 
-def test_prior_index_file_init(table_dir, index):
-    index_info = {"map": {"test": index}, "blacklist": {"_bad"}}
-    with open(table_dir.join("index"), "wb") as f:
-        pickle.dump(index_info, f)
-    manager = IndexManager(str(table_dir.join("index")))
+def test_prior_index_file_init(table_dir, tmpdir, index):
+    index_map = {"test": index}
+    index_blacklist = {"_bad"}
+    index_dir = tmpdir.mkdir("table", "index")
+    dump(index_dir.join("map"), index_map)
+    dump(index_dir.join("blacklist"), index_blacklist)
+    manager = IndexManager(index_dir)
     assert manager.index_blacklist == {"_bad"}
     assert manager.index_map == {"test": index}
 
 
-def test_persist_load(table_dir, index):
-    manager = IndexManager(str(table_dir.join("index")))
+def test_persist_load(table_dir, tmpdir, index):
+    index_dir = tmpdir.mkdir("table", "index")
+    manager = IndexManager(index_dir)
     manager.index_blacklist = {"_bad"}
     manager.index_map = {"test": index}
-    manager.index_attributes = {"good": {1}}
     manager.persist()
-    new_manager = IndexManager(str(table_dir.join("index")))
+    new_manager = IndexManager(index_dir)
     assert new_manager.index_blacklist == {"_bad"}
     assert new_manager.index_map == {"test": index}
 
