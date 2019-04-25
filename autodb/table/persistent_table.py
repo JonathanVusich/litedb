@@ -88,6 +88,7 @@ class PersistentTable(Table):
         self.shard_manager.insert(item_dict)
         for index, item in item_dict.items():
             self.index_manager.index_item(item, index)
+        self.persist()
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
 
