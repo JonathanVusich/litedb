@@ -2,6 +2,7 @@ from typing import Dict, Tuple, Generator, Iterable
 from sortedcontainers import SortedDict
 
 from ..utils.serialization import serialize, deserialize
+from ..utils.path import get_shard_file_paths
 from .buffer import ShardBuffer
 
 SHARD_SIZE = 512
@@ -9,7 +10,8 @@ SHARD_SIZE = 512
 
 class ShardManager:
 
-    def __init__(self, table_dir: str, shard_paths: Dict[int, str]) -> None:
+    def __init__(self, table_dir: str) -> None:
+        shard_paths = get_shard_file_paths(table_dir)
         self.buffer = ShardBuffer(table_dir, shard_paths)
 
     def retrieve(self, indexes: Iterable[int]) -> Generator[object, None, None]:

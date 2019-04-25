@@ -41,6 +41,8 @@ def dump(path: str, item: object) -> None:
             return
     except PathError:
         pass
+    if not os.path.exists(os.path.dirname(path)):
+        os.mkdir(os.path.dirname(path))
     with open(path, "wb") as file:
         file.write(chksum)
         file.write(pickled_data)

@@ -79,6 +79,10 @@ def get_shard_number(file_name: str) -> int:
     return int(file_name[5:])
 
 
+def get_shard_file_paths(directory: str) -> Dict[int, str]:
+    return dict((get_shard_number(file), file) for file in [file for file in listdir(directory) if is_shard(file)])
+
+
 def valid_table_contents(dir_path: str) -> bool:
     files = [file for file in listdir(dir_path)]
     index_files = [file for file in files if is_index(file)]

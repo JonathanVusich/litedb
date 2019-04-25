@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Generator, Tuple
+from typing import List, Generator
 
 from sortedcontainers import SortedList, SortedDict
 
@@ -17,7 +17,7 @@ class PersistentTable(Table):
     objects from the list.
     """
 
-    def __init__(self, directory: str = None, path_info: Tuple[str, str, str, Dict[int, str]] = None,
+    def __init__(self, directory: str = None,
                  table_type=None) -> None:
         """
         This class can be instantiated as either a fresh new table or as an existing one from a file structure.
@@ -27,26 +27,20 @@ class PersistentTable(Table):
         :param path_info:
         :param table_type:
         """
-        if path_info is None and directory is not None and table_type is not None:
-            self.directory = directory
-            self.index_path = create_index_path(self.directory)
-            self.info_path = create_info_path(self.directory)
-            shard_paths: Dict[int: str] = {}
-            self.shard_manager = ShardManager(self.directory, shard_paths)
-            self.index_manager = IndexManager(self.index_path)
+
+        self.directory = directory
+        self.index_path = create_index_path(self.directory)
+        self.info_path = create_info_path(self.directory)
+        self.shard_manager = ShardManager(self.directory)
+        self.index_manager = IndexManager(self.index_path)
+        if table_type is not None:
             self.table_type = table_type
             self.size = 0
             self.unused_indexes: SortedList[int] = SortedList()
-        elif path_info is not None and directory is None and table_type is None:
-            self.directory = path_info[0]
-            self.index_path = path_info[1]
-            self.info_path = path_info[2]
-            shard_paths = path_info[3]
-            self.shard_manager = ShardManager(self.directory, shard_paths)
-            self.index_manager = IndexManager(self.index_path)
+        elif table_type is None:
             self.table_type = load(os.path.join(self.info_path, "table_type"))
             self.size = load(os.path.join(self.info_path, "size"))
-            self.unused_indexes: List[int] = load(os.path.join(self.info_path, "unused_indexes"))
+            self.unused_indexes: SortedList[int] = load(os.path.join(self.info_path, "unused_indexes"))
         else:
             raise AttributeError
 
@@ -57,8 +51,8 @@ class PersistentTable(Table):
         return self.size
 
     @classmethod
-    def from_file(cls, path_info: Tuple[str, str, str, Dict[int, str]]):
-        return cls(path_info=path_info)
+    def from_file(cls, directory: str):
+        return cls(directory=directory)
 
     @classmethod
     def new(cls, directory: str, table_type):
@@ -81,6 +75,19 @@ class PersistentTable(Table):
         self.size += 1
         self.index_manager.index_item(item, index)
         self.persist()
+
+    def batch_insert(self, item_list: List[object]) -> None:
+        item_dict = SortedDict()
+        for item in item_list:
+            if len(self.unused_indexes) > 0:
+                index = self.unused_indexes.pop()
+            else:
+                index = self.size
+            self.size += 1
+            item_dict[index] = item
+        self.shard_manager.insert(item_dict)
+        for index, item in item_dict.items():
+            self.index_manager.index_item(item, index)
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
 
