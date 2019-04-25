@@ -80,7 +80,7 @@ def get_shard_number(file_name: str) -> int:
 
 
 def get_shard_file_paths(directory: str) -> Dict[int, str]:
-    return dict((get_shard_number(file), file) for file in [file for file in listdir(directory) if is_shard(file)])
+    return dict((get_shard_number(file), path.join(directory, file)) for file in [file for file in listdir(directory) if is_shard(file)])
 
 
 def valid_table_contents(dir_path: str) -> bool:

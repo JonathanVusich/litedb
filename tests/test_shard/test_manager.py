@@ -12,7 +12,7 @@ def shard_manager(tmpdir):
     s = serialize
     shard = [s(item) for item in ([None] * 512)]
     dump(temp_directory.join("shard0"), shard)
-    return ShardManager(table_dir, paths)
+    return ShardManager(table_dir)
 
 
 @pytest.fixture(scope='module')
