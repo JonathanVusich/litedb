@@ -1,23 +1,18 @@
-import cProfile as profile
 import inspect
 import sys
+import time
 
 from diskcache import Cache
 from pcpartpicker.parts import Memory
-from pcpartpicker import API
 
-from autodb.database import MemoryDatabase, DiskDatabase
 from autodb.table import PersistentTable
 
 
 def main():
-    table = PersistentTable.new("/home/chrx/Documents/autodb/", table_type=Memory)
-    cache = Cache("/tmp/")
-    part_data = cache["part_data"]
-    for part in part_data['memory']:
-        table.insert(part)
-    parts = list(table.retrieve(brand="G.Skill", module_type="DDR4", cas_timing=16))
-    print(parts)
+    table = PersistentTable.from_file("C:/Users/apian/Desktop/autodb/")
+    start = time.perf_counter()
+    values = list(table.retrieve(brand="G.Skill"))
+    print(time.perf_counter() - start)
 
 
 def get_size(obj, seen=None):

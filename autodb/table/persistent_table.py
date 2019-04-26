@@ -29,6 +29,8 @@ class PersistentTable(Table):
         """
 
         self.directory = directory
+        if not os.path.exists(directory):
+            os.mkdir(directory)
         self.index_path = create_index_path(self.directory)
         self.info_path = create_info_path(self.directory)
         self.shard_manager = ShardManager(self.directory)
@@ -36,11 +38,11 @@ class PersistentTable(Table):
         if table_type is not None:
             self.table_type = table_type
             self.size = 0
-            self.unused_indexes: SortedList[int] = SortedList()
+            self.unused_indexes: SortedList = SortedList()
         elif table_type is None:
             self.table_type = load(os.path.join(self.info_path, "table_type"))
             self.size = load(os.path.join(self.info_path, "size"))
-            self.unused_indexes: SortedList[int] = load(os.path.join(self.info_path, "unused_indexes"))
+            self.unused_indexes: SortedList = load(os.path.join(self.info_path, "unused_indexes"))
         else:
             raise AttributeError
 
@@ -117,7 +119,7 @@ class PersistentTable(Table):
     def _delete(self, object_index: int) -> None:
         self.index_manager.unindex_item(self.shard_manager.retrieve((object_index,)), object_index)
         self.shard_manager.delete((object_index,))
-        self.unused_indexes.append(object_index)
+        self.unused_indexes.add(object_index)
         self.size -= 1
 
 
