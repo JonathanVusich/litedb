@@ -93,7 +93,6 @@ class PersistentTable(Table):
         self.persist()
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
-
         if len(kwargs) == 0:
             return self.shard_manager.retrieve_all()
         indexes = self.index_manager.retrieve(**kwargs)
@@ -106,20 +105,17 @@ class PersistentTable(Table):
         return [index for index in self.index_manager.index_map]
 
     def delete(self, **kwargs):
-        indexes_to_delete = self.index_manager.retrieve(**kwargs)
-        # Sort indexes for shards
-        indexes_to_delete = sorted(list(indexes_to_delete))
+        if len(kwargs) == 0:
+            indexes_to_delete = self.index_manager.retrieve_all()
+        else:
+            indexes_to_delete = self.index_manager.retrieve(**kwargs)
+        indexes_to_delete = sorted(list(indexes_to_delete))  # Sort indexes for shards
+        self.size -= len(indexes_to_delete)  # Decrement the size of the table
         if indexes_to_delete:
             items_to_delete = self.shard_manager.retrieve(indexes_to_delete)
             for item, index in zip(items_to_delete, indexes_to_delete):
                 self.index_manager.unindex_item(item, index)
-            self.unused_indexes.extend(indexes_to_delete)
+            self.unused_indexes.update(indexes_to_delete)
             self.shard_manager.delete(indexes_to_delete)
-
-    def _delete(self, object_index: int) -> None:
-        self.index_manager.unindex_item(self.shard_manager.retrieve((object_index,)), object_index)
-        self.shard_manager.delete((object_index,))
-        self.unused_indexes.add(object_index)
-        self.size -= 1
 
 
