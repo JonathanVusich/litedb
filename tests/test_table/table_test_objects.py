@@ -47,6 +47,11 @@ class GoodObject:
     def __init__(self, integer: int) -> None:
         self.good_index = GoodIndex(integer)
 
+    def __eq__(self, other):
+        if isinstance(other, GoodObject):
+            return self.good_index == other.good_index
+        raise NotImplementedError
+
 
 class StandardTableObject:
 
