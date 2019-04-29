@@ -4,31 +4,15 @@ from typing import List, Generator, Tuple, Dict
 from ..errors import DatabaseNotFound
 
 
-def load_tables(directory: str) -> Generator[Tuple[str, str, str, Dict[int, str]], None, None]:
+def load_tables(directory: str) -> str:
     tables = 0
     with scandir(path=directory) as curdir:
         for entry in curdir:
             if is_table_folder(entry):
                 tables += 1
-                yield retrieve_table_from_directory(entry)
+                yield entry
     if tables == 0:
         raise DatabaseNotFound
-
-
-def retrieve_table_from_directory(directory: DirEntry) -> Tuple[str, str, str, Dict[int, str]]:
-    table_path = directory.path
-    index = None
-    info_file = None
-    shards = {}
-    with scandir(path=table_path) as curdir:
-        for entry in curdir:
-            if is_index_file(entry):
-                index = entry.path
-            elif is_info_file(entry):
-                info_file = entry.path
-            elif is_shard_file(entry):
-                shards.update({get_shard_number(entry.name): entry.path})
-    return table_path, index, info_file, shards
 
 
 def is_table_folder(directory: DirEntry) -> bool:
