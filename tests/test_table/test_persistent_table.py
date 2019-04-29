@@ -2,7 +2,7 @@ import pytest
 from sortedcontainers import SortedList
 
 from autodb.table.persistent_table import PersistentTable
-from tests.test_table.table_test_objects import GoodObject
+from tests.test_table.table_test_objects import GoodObject, GoodIndex
 
 
 @pytest.fixture
@@ -57,3 +57,21 @@ def test_batch_insert(table, table_dir):
     table.batch_insert(objects_to_insert)
     assert table.size == 2
     assert table.unused_indexes == SortedList()
+
+
+def test_delete_all(table):
+    test_objects = [GoodObject(x) for x in range(1000)]
+    table.batch_insert(test_objects)
+    table.delete()
+    assert table.size == 0
+    assert table.unused_indexes == [x for x in range(1000)]
+    assert list(table.retrieve()) == []
+
+
+def test_delete_some(table):
+    test_objects = [GoodObject(x) for x in range(1000)]
+    table.batch_insert(test_objects)
+    table.delete(good_index=(GoodIndex(0), GoodIndex(499)))
+    assert table.size == 500
+    assert table.unused_indexes == [x for x in range(500)]
+    assert list(table.retrieve()) == test_objects[500:]
