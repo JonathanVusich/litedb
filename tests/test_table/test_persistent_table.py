@@ -15,6 +15,11 @@ def table(table_dir):
     return PersistentTable.new(table_dir, GoodObject)
 
 
+@pytest.fixture
+def test_objects():
+    return [GoodObject(x) for x in range(1000)]
+
+
 def test_new_table(table_dir):
     table = PersistentTable.new(table_dir, table_type=GoodObject)
     assert table.directory == table_dir
@@ -59,8 +64,7 @@ def test_batch_insert(table, table_dir):
     assert table.unused_indexes == SortedList()
 
 
-def test_delete_all(table):
-    test_objects = [GoodObject(x) for x in range(1000)]
+def test_delete_all(table, test_objects):
     table.batch_insert(test_objects)
     table.delete()
     assert table.size == 0
@@ -68,10 +72,19 @@ def test_delete_all(table):
     assert list(table.retrieve()) == []
 
 
-def test_delete_some(table):
-    test_objects = [GoodObject(x) for x in range(1000)]
+def test_delete_some(table, test_objects):
     table.batch_insert(test_objects)
     table.delete(good_index=(GoodIndex(0), GoodIndex(499)))
     assert table.size == 500
     assert table.unused_indexes == [x for x in range(500)]
     assert list(table.retrieve()) == test_objects[500:]
+
+
+def test_retrieve_all(table, test_objects):
+    table.batch_insert(test_objects)
+    assert list(table.retrieve()) == test_objects
+
+
+def test_retrieve_some(table, test_objects):
+    table.batch_insert(test_objects)
+    assert list(table.retrieve(good_index=(GoodIndex(0), GoodIndex(10)))) == test_objects[:10]
