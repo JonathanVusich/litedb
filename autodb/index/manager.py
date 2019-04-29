@@ -1,62 +1,34 @@
-import pickle
-from typing import List, Set, Dict, Optional, Generator
-
+from .index import Index
 from ..errors import InvalidRange
-from ..index import Index
 from ..utils.index import retrieve_possible_object_indexes
-from .table import Table
+from ..utils.serialization import dump, load
+from typing import Set, Optional
+import os
 
 
-class MemoryTable(Table):
-    """
-    This class stores elements of a certain class type within a regular Python list.
-    Object attributes are indexed and stored within indexes that can then be used to retrieve
-    objects from the list.
-    """
+class IndexManager:
 
-    def __init__(self) -> None:
-        self.size = 0
-        self.table: List[object] = []
-        self.pickle_table: List[Optional[bytes]] = []
-        self.unused_indexes: List[int] = []
-        self.index_map: Dict[str, Index] = {}
+    def __init__(self, index_path: str) -> None:
+        self.index_path = index_path
+        self.blacklist_path = os.path.join(self.index_path, "blacklist")
+        self.map_path = os.path.join(self.index_path, "map")
         self.index_blacklist: Set[str] = set()
+        self.index_map = {}
+        self.load()
 
-    def __repr__(self):
-        return f"Table(size={self.size})"
+    def load(self) -> None:
+        index_map = load(self.map_path)
+        if index_map is not None:
+            self.index_map = index_map
+        blacklist = load(self.blacklist_path)
+        if blacklist is not None:
+            self.index_blacklist = blacklist
 
-    def __len__(self):
-        return self.size
+    def persist(self) -> None:
+        dump(self.blacklist_path, self.index_blacklist)
+        dump(self.map_path, self.index_map)
 
-    def insert(self, item: object) -> None:
-        byte_repr = pickle.dumps(item, protocol=pickle.HIGHEST_PROTOCOL)
-        if len(self.unused_indexes) > 0:
-            index = self.unused_indexes.pop()
-            self.table[index] = item
-            self.pickle_table[index] = byte_repr
-        else:
-            index = len(self.table)
-            self.table.append(item)
-            self.pickle_table.append(byte_repr)
-        self.size += 1
-        self._index_item(item, index)
-
-    def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
-        if len(kwargs) == 0:
-            return (pickle.loads(item) for item in self.pickle_table if item is not None)
-        indexes = self._retrieve(**kwargs)
-        if indexes:
-            return (pickle.loads(self.pickle_table[index]) for index in indexes)
-        else:
-            return ([])
-
-    def delete(self, **kwargs):
-        indexes_to_delete = self._retrieve(**kwargs)
-        if indexes_to_delete:
-            for index in indexes_to_delete:
-                self._delete(index)
-
-    def _index_item(self, item: object, index: int) -> None:
+    def index_item(self, item: object, index: int) -> None:
         """Inserts/creates index tables based on the given object."""
         indexes = retrieve_possible_object_indexes(item)
         for var_name, value in indexes.items():
@@ -70,15 +42,13 @@ class MemoryTable(Table):
                 self.index_map.pop(var_name)
                 self.index_blacklist.add(var_name)
 
-    def _unindex_item(self, item: object, index: int) -> None:
+    def unindex_item(self, item: object, index: int) -> None:
         """Removes indexes for the given object."""
         indexes = retrieve_possible_object_indexes(item)
         for var_name, value in indexes.items():
-            if var_name in self.index_blacklist:
-                continue
             self.index_map[var_name].destroy(value, index)
 
-    def _retrieve(self, **kwargs) -> Optional[Set[int]]:
+    def retrieve(self, **kwargs) -> Optional[Set[int]]:
         indexes: Set[int] = set()
         for x, key in enumerate(kwargs.keys()):
             if key in self.index_blacklist or key not in self.index_map:
@@ -110,9 +80,9 @@ class MemoryTable(Table):
         if len(indexes) > 0:
             return indexes
 
-    def _delete(self, object_index: int) -> None:
-        self._unindex_item(self.table[object_index], object_index)
-        self.table[object_index] = None
-        self.pickle_table[object_index] = None
-        self.unused_indexes.append(object_index)
-        self.size -= 1
+    def retrieve_all(self) -> Optional[Set[int]]:
+        indexes: Set[int] = set()
+        for index in self.index_map.values():
+            indexes.update(index.retrieve_range(None, None))
+        return indexes
+

@@ -4,7 +4,6 @@ from ..test_table.table_test_objects import BadAndGoodObject, GoodObject, BadObj
 from hypothesis.strategies import integers
 from hypothesis import given
 import unittest
-import random
 
 
 class TestMemoryDatabase(unittest.TestCase):
