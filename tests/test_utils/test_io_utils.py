@@ -23,11 +23,7 @@ def test_load_database_well_formed():
         tables = list(load_tables(tempdir))
         assert len(tables) == 1
         table = tables[0]
-        assert table[0] == table_dir
-        assert table[1] == index_path
-        assert table[2] == info_path
-        assert len(table[3]) == 1
-        assert table[3][0] == shard0_path
+        assert table.path == table_dir
 
 
 def test_load_database_with_junk_files():
@@ -64,11 +60,7 @@ def test_load_database_with_junk_files():
         tables = list(load_tables(tempdir))
         assert len(tables) == 1
         table = tables[0]
-        assert table[0] == table_dir
-        assert table[1] == index_path
-        assert table[2] == info_path
-        assert len(table[3]) == 1
-        assert table[3][0] == shard0_path
+        assert table.path == table_dir
 
 
 def test_load_database_no_database():

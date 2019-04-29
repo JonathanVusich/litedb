@@ -62,7 +62,7 @@ def test_delete_valid(database, test_objects):
     assert len(database) == 999
 
 
-def test_delete_valid(database, test_objects):
+def test_delete_invalid(database, test_objects):
     database.batch_insert(test_objects)
     with pytest.raises(KeyError):
         database.delete(class_type=SimpleRecord, x=500)

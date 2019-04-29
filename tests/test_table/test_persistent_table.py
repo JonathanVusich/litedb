@@ -87,4 +87,4 @@ def test_retrieve_all(table, test_objects):
 
 def test_retrieve_some(table, test_objects):
     table.batch_insert(test_objects)
-    assert list(table.retrieve(good_index=(GoodIndex(0), GoodIndex(10)))) == test_objects[:10]
+    assert list(table.retrieve(good_index=(GoodIndex(0), GoodIndex(10)))) == test_objects[:11]
