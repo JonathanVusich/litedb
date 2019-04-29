@@ -79,3 +79,10 @@ class IndexManager:
                     indexes.intersection_update(results)
         if len(indexes) > 0:
             return indexes
+
+    def retrieve_all(self) -> Optional[Set[int]]:
+        indexes: Set[int] = set()
+        for index in self.index_map.values():
+            indexes.update(index.retrieve_range(None, None))
+        return indexes
+
