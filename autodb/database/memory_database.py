@@ -19,22 +19,21 @@ class MemoryDatabase(Database):
         return "".join([f"{str(cls)}: size={self.class_map[cls].size}\n" for cls in self.class_map.keys()])
 
     def insert(self, complex_object: object):
-        class_type = type(complex_object)
-        if class_type not in self.class_map:
-            self.class_map.update({class_type: MemoryTable()})
-        self.class_map[class_type].insert(complex_object)
+        cls = type(complex_object)
+        if cls not in self.class_map:
+            self.class_map.update({cls: MemoryTable()})
+        self.class_map[cls].insert(complex_object)
 
-    def retrieve(self, class_type=None, **kwargs) -> Union[Optional[Generator[object, None, None]], chain]:
+    def retrieve(self, cls=None, **kwargs) -> Union[Optional[Generator[object, None, None]], chain]:
         """
         This method retrieves objects from the database depending on the user specified query.
         Note: This method will not throw query errors when performing a search on the entire
         database. Typically this type of behavior should be avoided.
-        :param class_type:
-        :param return_copies:
+        :param cls:
         :param kwargs:
         :return:
         """
-        if class_type is None:
+        if cls is None:
             object_generators = []
             for table in self.class_map.values():
                 try:
@@ -48,12 +47,12 @@ class MemoryDatabase(Database):
             if object_generators:
                 return chain(*object_generators)
         else:
-            if class_type not in self.class_map:
+            if cls not in self.class_map:
                 raise IndexError
-            return self.class_map[class_type].retrieve(**kwargs)
+            return self.class_map[cls].retrieve(**kwargs)
 
-    def delete(self, class_type=None, **kwargs) -> None:
-        if class_type is None:
+    def delete(self, cls=None, **kwargs) -> None:
+        if cls is None:
             for table in self.class_map.values():
                 try:
                     table.delete(**kwargs)
@@ -62,6 +61,6 @@ class MemoryDatabase(Database):
                 except InvalidRange:
                     raise InvalidRange(f"An invalid range query was given!")
         else:
-            if class_type not in self.class_map:
+            if cls not in self.class_map:
                 raise IndexError
-            self.class_map[class_type].delete(**kwargs)
+            self.class_map[cls].delete(**kwargs)

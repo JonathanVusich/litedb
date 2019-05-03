@@ -28,17 +28,20 @@ class DiskDatabase(Database):
     def __repr__(self):
         return f"DiskDatabase(directory={self.directory})"
 
+    def __iter__(self):
+        return iter(self.tables.values())
+
     def insert(self, item: object) -> None:
         """Inserts an arbitrary Python object into the database. Do not use this
         database to store raw types."""
-        class_name = type(item)
+        cls = type(item)
         try:
-            self.tables[class_name].insert(item)
+            self.tables[cls].insert(item)
         except KeyError:
             self.tables.update(
-                {class_name: PersistentTable.new(os.path.join(self.directory, hex(abs(hash(class_name)))),
-                                                 table_type=class_name)})
-            self.tables[class_name].insert(item)
+                {cls: PersistentTable.new(os.path.join(self.directory, hex(abs(hash(cls)))),
+                                          table_type=cls)})
+            self.tables[cls].insert(item)
 
     def batch_insert(self, items: list) -> None:
         """Inserts a list of similar Python objects into the database."""
@@ -56,14 +59,14 @@ class DiskDatabase(Database):
                                                           table_type=first_item_type)})
                 self.tables[first_item_type].batch_insert(items)
 
-    def retrieve(self, class_type=None, **kwargs):
+    def retrieve(self, cls, **kwargs):
         try:
-            return self.tables[class_type].retrieve(**kwargs)
+            return self.tables[cls].retrieve(**kwargs)
         except KeyError:
             raise KeyError("No objects of this type were ever stored in this database!")
 
-    def delete(self, class_type=None, **kwargs):
+    def delete(self, cls, **kwargs):
         try:
-            return self.tables[class_type].delete(**kwargs)
+            return self.tables[cls].delete(**kwargs)
         except KeyError:
             raise KeyError("No objects of this type were ever stored in this database!")

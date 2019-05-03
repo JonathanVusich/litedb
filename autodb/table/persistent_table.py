@@ -47,7 +47,7 @@ class PersistentTable(Table):
             raise AttributeError
 
     def __repr__(self):
-        return f"Table(size={self.size})"
+        return f"Table(table_type={self.table_type}, size={self.size})"
 
     def __len__(self):
         return self.size
