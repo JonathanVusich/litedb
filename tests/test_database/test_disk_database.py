@@ -56,7 +56,7 @@ def test_retrieve_invalid(database, test_objects):
 
 def test_delete_valid(database, test_objects):
     database.batch_insert(test_objects)
-    database.delete(class_type=ComplexRecord, x=500)
+    database.delete(cls=ComplexRecord, x=500)
     items = list(database.retrieve(class_type=ComplexRecord, x=500))
     assert items == []
     assert len(database) == 999
@@ -65,4 +65,4 @@ def test_delete_valid(database, test_objects):
 def test_delete_invalid(database, test_objects):
     database.batch_insert(test_objects)
     with pytest.raises(KeyError):
-        database.delete(class_type=SimpleRecord, x=500)
+        database.delete(cls=SimpleRecord, x=500)
