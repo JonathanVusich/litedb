@@ -1,5 +1,5 @@
 import os
-from typing import List, Generator
+from typing import List, Generator, Union, Set
 
 from sortedcontainers import SortedList, SortedDict
 
@@ -94,22 +94,27 @@ class PersistentTable(Table):
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
         if len(kwargs) == 0:
-            return self.shard_manager.retrieve_all()
+            raise ValueError
         indexes = self.index_manager.retrieve(**kwargs)
         if indexes:
             return self.shard_manager.retrieve(indexes)
         else:
             return ([])
 
+    def retrieve_all(self) -> [Generator[object, None, None]]:
+        return self.shard_manager.retrieve_all()
+
     def retrieve_valid_indexes(self) -> List[str]:
         return [index for index in self.index_manager.index_map]
 
     def delete(self, **kwargs):
         if len(kwargs) == 0:
-            indexes_to_delete = self.index_manager.retrieve_all()
-        else:
-            indexes_to_delete = self.index_manager.retrieve(**kwargs)
-        indexes_to_delete = sorted(list(indexes_to_delete))  # Sort indexes for shards
+            raise ValueError
+        indexes_to_delete = self.index_manager.retrieve(**kwargs)
+        self._delete_indexes(indexes_to_delete)
+
+    def _delete_indexes(self, indexes: Union[Set[int], List[int]]) -> None:
+        indexes_to_delete = sorted(indexes)  # Sort indexes for shards
         self.size -= len(indexes_to_delete)  # Decrement the size of the table
         if indexes_to_delete:
             items_to_delete = self.shard_manager.retrieve(indexes_to_delete)
@@ -117,5 +122,9 @@ class PersistentTable(Table):
                 self.index_manager.unindex_item(item, index)
             self.unused_indexes.update(indexes_to_delete)
             self.shard_manager.delete(indexes_to_delete)
+        self.persist()
 
+    def delete_all(self):
+        indexes_to_delete = sorted(self.index_manager.retrieve_all())
+        self._delete_indexes(indexes_to_delete)
 
