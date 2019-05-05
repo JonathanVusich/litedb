@@ -35,23 +35,48 @@ class Database(ABC):
         raise NotImplemented
 
     @abstractmethod
-    def retrieve(self, class_type=None, **kwargs):
+    def retrieve(self, cls, **kwargs):
         """
         Retrieves objects from the database based on the given
         class_type and the given queries.
-        :param class_type:
+        :param cls:
         :param kwargs:
         :return:
         """
         raise NotImplemented
 
     @abstractmethod
-    def delete(self, class_type=None, **kwargs):
+    def retrieve_all(self):
+        """
+        Retrieve all objects from the database sequentially.
+        :return:
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def retrieve_valid_indexes(self, cls):
+        """
+        Retrieve the valid indexes for the objects of type 'cls'.
+        :param cls:
+        :return:
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def delete(self, cls, **kwargs):
         """
         Deletes objects from the database based on the given
         class_type and the given queries.
-        :param class_type:
+        :param cls:
         :param kwargs:
+        :return:
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def clear(self):
+        """
+        Delete all objects from the database.
         :return:
         """
         raise NotImplemented
