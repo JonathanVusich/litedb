@@ -30,7 +30,8 @@ class MemoryIndex(IndexManager):
         """Removes indexes for the given object."""
         indexes = retrieve_possible_object_indexes(item)
         for var_name, value in indexes.items():
-            self.index_map[var_name].destroy(value, index)
+            if var_name not in self.index_blacklist:
+                self.index_map[var_name].destroy(value, index)
 
     def retrieve(self, **kwargs) -> Optional[Set[int]]:
         indexes: Set[int] = set()
