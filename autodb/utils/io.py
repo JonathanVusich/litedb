@@ -11,3 +11,12 @@ def _remove_readonly(func, path, _):
 def rmdir(directory):
     """Removes the given directory entirely."""
     shutil.rmtree(directory, onerror=_remove_readonly)
+
+
+def empty_directory(directory) -> None:
+    with os.scandir(directory) as dir_contents:
+        for entry in dir_contents:
+            if entry.is_file():
+                os.unlink(entry)
+            if entry.is_dir():
+                rmdir(entry)
