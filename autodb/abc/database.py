@@ -17,6 +17,15 @@ class Database(ABC):
         raise NotImplemented
 
     @abstractmethod
+    def __iter__(self):
+        """
+        Should allow iteration of the tables contained
+        within this database.
+        :return:
+        """
+        raise NotImplemented
+
+    @abstractmethod
     def __repr__(self):
         """
         Should print out a summary of all of the object
@@ -35,11 +44,18 @@ class Database(ABC):
         raise NotImplemented
 
     @abstractmethod
-    def retrieve(self, cls, **kwargs):
+    def select(self, cls):
+        """
+        Select items of type `cls`.
+        :param cls:
+        :return:
+        """
+
+    @abstractmethod
+    def retrieve(self, **kwargs):
         """
         Retrieves objects from the database based on the given
         class_type and the given queries.
-        :param cls:
         :param kwargs:
         :return:
         """
@@ -54,16 +70,15 @@ class Database(ABC):
         raise NotImplemented
 
     @abstractmethod
-    def retrieve_valid_indexes(self, cls):
+    def retrieve_valid_indexes(self):
         """
-        Retrieve the valid indexes for the objects of type 'cls'.
-        :param cls:
+        Retrieve the valid indexes for the selected table.
         :return:
         """
         raise NotImplemented
 
     @abstractmethod
-    def delete(self, cls, **kwargs):
+    def delete(self, **kwargs):
         """
         Deletes objects from the database based on the given
         class_type and the given queries.
