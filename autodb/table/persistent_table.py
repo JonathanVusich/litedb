@@ -4,9 +4,10 @@ from typing import List, Generator, Union, Set
 from sortedcontainers import SortedList, SortedDict
 
 from .table import Table
-from ..index import IndexManager
+from ..index import PersistentIndex
 from ..shard import ShardManager
 from ..utils.path import create_info_path, create_index_path
+from ..utils.io import empty_directory
 from ..utils.serialization import load, dump
 
 
@@ -24,7 +25,6 @@ class PersistentTable(Table):
         To create a new table, an empty table directory and table type must be specified. Otherwise path info for
         the existing table must be supplied.
         :param directory:
-        :param path_info:
         :param table_type:
         """
 
@@ -34,7 +34,7 @@ class PersistentTable(Table):
         self.index_path = create_index_path(self.directory)
         self.info_path = create_info_path(self.directory)
         self.shard_manager = ShardManager(self.directory)
-        self.index_manager = IndexManager(self.index_path)
+        self.index_manager = PersistentIndex(self.index_path)
         if table_type is not None:
             self.table_type = table_type
             self.size = 0
@@ -105,7 +105,7 @@ class PersistentTable(Table):
         return self.shard_manager.retrieve_all()
 
     def retrieve_valid_indexes(self) -> List[str]:
-        return [index for index in self.index_manager.index_map]
+        return list(self.index_manager.index_map.keys())
 
     def delete(self, **kwargs):
         if len(kwargs) == 0:
@@ -125,6 +125,9 @@ class PersistentTable(Table):
         self.persist()
 
     def delete_all(self):
-        indexes_to_delete = sorted(self.index_manager.retrieve_all())
-        self._delete_indexes(indexes_to_delete)
+        empty_directory(self.directory)
+        self.shard_manager = ShardManager(self.directory)
+        self.index_manager = PersistentIndex(self.index_path)
+        self.size = 0
+        self.unused_indexes: SortedList = SortedList()
 
