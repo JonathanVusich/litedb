@@ -23,6 +23,7 @@ class ShardBuffer:
         self.mru = ShardMRU()
 
     def __iter__(self):
+        self.current_shard_index = -1
         return self
 
     def __next__(self) -> List[Optional[bytes]]:
@@ -31,7 +32,6 @@ class ShardBuffer:
             self._ensure_shard_loaded(self.current_shard_index)
             return self.loaded_shards[self.current_shard_index]
         else:
-            self.current_shard_index = -1
             raise StopIteration
 
     def __getitem__(self, shard_index: int) -> List[Optional[bytes]]:
