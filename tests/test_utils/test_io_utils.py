@@ -9,7 +9,7 @@ from autodb.utils.path import load_tables, is_shard, is_index, is_table, is_info
 
 def test_load_database_well_formed():
     with tempfile.TemporaryDirectory() as tempdir:
-        table_dir = os.path.join(tempdir, "table1")
+        table_dir = os.path.join(tempdir, "0x1234567890123456")
         os.mkdir(table_dir)
         index_path = os.path.join(table_dir, "index")
         with open(index_path, "wb"):
@@ -28,7 +28,7 @@ def test_load_database_well_formed():
 
 def test_load_database_with_junk_files():
     with tempfile.TemporaryDirectory() as tempdir:
-        table_dir = os.path.join(tempdir, "table1")
+        table_dir = os.path.join(tempdir, "0x1234567890123456")
         os.mkdir(table_dir)
 
         # Add junk table directories
@@ -65,55 +65,10 @@ def test_load_database_with_junk_files():
 
 def test_load_database_no_database():
     with tempfile.TemporaryDirectory() as tempdir:
-        table_dir = os.path.join(tempdir, "table1")
+        table_dir = os.path.join(tempdir, "0x1234567890123456")
         os.mkdir(table_dir)
         shard0_path = os.path.join(table_dir, "shard0")
         with open(shard0_path, "wb"):
             pass
         with pytest.raises(DatabaseNotFound):
             list(load_tables(tempdir))
-
-
-def test_is_table():
-    assert is_table("table01")
-
-
-def test_is_shard():
-    assert is_shard("shard01")
-    assert not is_shard("shard_01")
-    assert is_shard("shard12345")
-    assert not is_shard("shard")
-
-
-def test_is_index():
-    assert is_index("index")
-    assert not is_index("index1")
-
-
-def test_is_info():
-    assert is_info("info")
-    assert not is_info("info1")
-
-
-def test_is_valid_table_directory():
-    with tempfile.TemporaryDirectory() as tempdir:
-        with open(os.path.join(tempdir, "index"), "wb"):
-            pass
-        with open(os.path.join(tempdir, "info"), "wb"):
-            pass
-        with open(os.path.join(tempdir, "shard0"), "wb"):
-            pass
-
-        assert valid_table_contents(tempdir)
-
-        # remove index file
-        os.remove(os.path.join(tempdir, "index"))
-
-        assert not valid_table_contents(tempdir)
-
-        # Add index file back and remove shard file
-        with open(os.path.join(tempdir, "index"), "wb"):
-            pass
-        os.remove(os.path.join(tempdir, "shard0"))
-
-        assert not valid_table_contents(tempdir)

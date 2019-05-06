@@ -66,10 +66,10 @@ def test_batch_insert(table, table_dir):
 
 def test_delete_all(table, test_objects):
     table.batch_insert(test_objects)
-    table.delete()
+    table.delete_all()
     assert table.size == 0
-    assert table.unused_indexes == [x for x in range(1000)]
-    assert list(table.retrieve()) == []
+    assert table.unused_indexes == []
+    assert list(table.retrieve_all()) == []
 
 
 def test_delete_some(table, test_objects):
@@ -77,12 +77,12 @@ def test_delete_some(table, test_objects):
     table.delete(good_index=(GoodIndex(0), GoodIndex(499)))
     assert table.size == 500
     assert table.unused_indexes == [x for x in range(500)]
-    assert list(table.retrieve()) == test_objects[500:]
+    assert list(table.retrieve_all()) == test_objects[500:]
 
 
 def test_retrieve_all(table, test_objects):
     table.batch_insert(test_objects)
-    assert list(table.retrieve()) == test_objects
+    assert list(table.retrieve_all()) == test_objects
 
 
 def test_retrieve_some(table, test_objects):
