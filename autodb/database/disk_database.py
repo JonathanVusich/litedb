@@ -87,7 +87,7 @@ class DiskDatabase(Database):
     def retrieve_valid_indexes(self) -> list:
         if self.selected_table is None:
             raise RuntimeError
-        indexes = self.selected_table.retrieve_valid_indexes()
+        indexes = self.tables[self.selected_table].retrieve_valid_indexes()
         self.selected_table = None
         return indexes
 

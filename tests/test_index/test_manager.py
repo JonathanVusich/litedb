@@ -1,10 +1,10 @@
 import pytest
-from autodb.index.persistent_index import PersistentIndex
-from autodb.index.index import Index
-from autodb.utils.serialization import dump, load
-import pickle
-from ..test_table.table_test_objects import StandardTableObject, BadObject
+
 from autodb.errors import InvalidRange
+from autodb.index.index import Index
+from autodb.index.persistent_index import PersistentIndex
+from autodb.utils.serialization import dump
+from ..test_table.table_test_objects import StandardTableObject, BadObject
 
 
 @pytest.fixture()

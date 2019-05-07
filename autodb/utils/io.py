@@ -1,5 +1,6 @@
-import os, stat
+import os
 import shutil
+import stat
 
 
 def _remove_readonly(func, path, _):

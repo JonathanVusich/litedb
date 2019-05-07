@@ -1,10 +1,10 @@
-from typing import List, Dict, Tuple, Union, Optional
 import os
 import pickle
-from .queue import ShardMRU
+from typing import List, Dict, Optional
 
-from ..utils.serialization import load, dump, serialize, deserialize, get_checksum
+from .queue import ShardMRU
 from ..utils.checksum import checksum
+from ..utils.serialization import load, dump, get_checksum
 
 SHARD_SIZE = 512
 

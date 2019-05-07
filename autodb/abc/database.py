@@ -82,7 +82,6 @@ class Database(ABC):
         """
         Deletes objects from the database based on the given
         class_type and the given queries.
-        :param cls:
         :param kwargs:
         :return:
         """

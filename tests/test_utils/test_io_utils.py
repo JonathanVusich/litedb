@@ -1,10 +1,10 @@
 import os
 import tempfile
+
 import pytest
 
 from autodb.errors import DatabaseNotFound
-from autodb.utils.path import load_tables, is_shard, is_index, is_table, is_info, \
-    valid_table_contents
+from autodb.utils.path import load_tables
 
 
 def test_load_database_well_formed():

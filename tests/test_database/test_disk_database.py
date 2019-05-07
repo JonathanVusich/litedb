@@ -58,7 +58,7 @@ def test_retrieve_valid(database, test_objects):
 def test_retrieve_invalid(database, test_objects):
     database.batch_insert(test_objects)
     with pytest.raises(KeyError):
-        item = list(database.select(SimpleRecord).retrieve(x=500))
+        list(database.select(SimpleRecord).retrieve(x=500))
 
 
 def test_delete_valid(database, test_objects):
