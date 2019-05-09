@@ -73,29 +73,37 @@ class DiskDatabase(Database):
     def retrieve(self, **kwargs):
         if self.selected_table is None:
             raise RuntimeError
-        items = self.tables[self.selected_table].retrieve(**kwargs)
-        self.selected_table = None
+        try:
+            items = self.tables[self.selected_table].retrieve(**kwargs)
+        finally:
+            self.selected_table = None
         return items
 
     def retrieve_all(self) -> Generator[object, None, None]:
         if self.selected_table is None:
             raise RuntimeError
-        items = self.tables[self.selected_table].retrieve_all()
-        self.selected_table = None
+        try:
+            items = self.tables[self.selected_table].retrieve_all()
+        finally:
+            self.selected_table = None
         return items
 
     def retrieve_valid_indexes(self) -> list:
         if self.selected_table is None:
             raise RuntimeError
-        indexes = self.tables[self.selected_table].retrieve_valid_indexes()
-        self.selected_table = None
+        try:
+            indexes = self.tables[self.selected_table].retrieve_valid_indexes()
+        finally:
+            self.selected_table = None
         return indexes
 
     def delete(self, **kwargs):
         if self.selected_table is None:
             raise RuntimeError
-        self.tables[self.selected_table].delete(**kwargs)
-        self.selected_table = None
+        try:
+            self.tables[self.selected_table].delete(**kwargs)
+        finally:
+            self.selected_table = None
 
     def clear(self):
         empty_directory(self.directory)
