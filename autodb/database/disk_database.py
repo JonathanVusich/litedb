@@ -60,8 +60,6 @@ class DiskDatabase(Database):
             return
         else:
             first_item_type = type(items[0])
-            if any((type(x) != first_item_type for x in items)):
-                raise ValueError("Batch insert requires all elements to be of the same type!")
             try:
                 self.tables[first_item_type].batch_insert(items)
             except KeyError:

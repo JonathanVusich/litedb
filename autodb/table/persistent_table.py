@@ -79,8 +79,11 @@ class PersistentTable(Table):
         self.persist()
 
     def batch_insert(self, item_list: List[object]) -> None:
+        first_item_type = type(item_list[0])
         item_dict = SortedDict()
         for item in item_list:
+            if type(item) != first_item_type:
+                raise ValueError("Batch insert requires all elements to be of the same type!")
             if len(self.unused_indexes) > 0:
                 index = self.unused_indexes.pop()
             else:
