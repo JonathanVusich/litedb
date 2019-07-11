@@ -11,20 +11,21 @@ class SimpleRecord:
 def test_table_retrieve():
     database = MemoryDatabase()
     database.insert(SimpleRecord(12))
-    with pytest.raises(IndexError):
-        database.retrieve(MemoryDatabase, x=12)
+    with pytest.raises(KeyError):
+        database.select(MemoryDatabase)
     with pytest.raises(InvalidRange):
-        database.retrieve(SimpleRecord, x=(1, 2, 3))
-        database.retrieve(x=(1, 2, 3))
+        database.select(SimpleRecord).retrieve(x=(1, 2, 3))
+    with pytest.raises(ValueError):
+        database.select(SimpleRecord).retrieve()
 
 
 def test_table_delete():
     database = MemoryDatabase()
     database.insert(SimpleRecord(12))
-    with pytest.raises(IndexError):
-        database.delete(MemoryDatabase, x=12)
+    with pytest.raises(KeyError):
+        database.select(MemoryDatabase)
     with pytest.raises(InvalidRange):
-        database.delete(SimpleRecord, x=(1, 2, 3))
-        database.delete(x=(1, 2, 3))
-
+        database.select(SimpleRecord).retrieve(x=(1, 2, 3))
+    with pytest.raises(ValueError):
+        database.select(SimpleRecord).delete()
 

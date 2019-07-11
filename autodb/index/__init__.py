@@ -1,2 +1,2 @@
 from .index import Index
-from .manager import IndexManager
+from .persistent_index import PersistentIndex

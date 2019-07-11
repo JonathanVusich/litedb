@@ -1,8 +1,10 @@
-from autodb.shard.buffer import ShardBuffer
-from autodb.utils.serialization import dump, load
-from collections import deque
-import pytest
 import pickle
+from collections import deque
+
+import pytest
+
+from autodb.shard.buffer import ShardBuffer
+from autodb.utils.serialization import dump
 
 
 @pytest.fixture()
@@ -29,7 +31,7 @@ def test_buffer_init(buffer):
 
 
 def test_empty_buffer_iter(empty_buffer):
-    for shard in empty_buffer:
+    for _ in empty_buffer:
         raise AssertionError
 
 
@@ -97,7 +99,7 @@ def test_buffer_free_shard(buffer):
     buffer._free_shard(0)
     shard_dir = buffer.shard_paths[0]
     with open(shard_dir, "rb") as f:
-        checksum = f.read(4)
+        f.read(4)
         file_shard = pickle.loads(f.read())
     assert file_shard == empty_shard
     assert 0 not in buffer.loaded_shards

@@ -1,12 +1,13 @@
 import os
-from typing import List, Generator
+from typing import List, Generator, Union, Set
 
 from sortedcontainers import SortedList, SortedDict
 
 from .table import Table
-from ..index import IndexManager
+from ..index import PersistentIndex
 from ..shard import ShardManager
 from ..utils.path import create_info_path, create_index_path
+from ..utils.io import empty_directory
 from ..utils.serialization import load, dump
 
 
@@ -24,7 +25,6 @@ class PersistentTable(Table):
         To create a new table, an empty table directory and table type must be specified. Otherwise path info for
         the existing table must be supplied.
         :param directory:
-        :param path_info:
         :param table_type:
         """
 
@@ -34,7 +34,7 @@ class PersistentTable(Table):
         self.index_path = create_index_path(self.directory)
         self.info_path = create_info_path(self.directory)
         self.shard_manager = ShardManager(self.directory)
-        self.index_manager = IndexManager(self.index_path)
+        self.index_manager = PersistentIndex(self.index_path)
         if table_type is not None:
             self.table_type = table_type
             self.size = 0
@@ -94,22 +94,27 @@ class PersistentTable(Table):
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
         if len(kwargs) == 0:
-            return self.shard_manager.retrieve_all()
+            raise ValueError
         indexes = self.index_manager.retrieve(**kwargs)
         if indexes:
             return self.shard_manager.retrieve(indexes)
         else:
             return ([])
 
+    def retrieve_all(self) -> [Generator[object, None, None]]:
+        return self.shard_manager.retrieve_all()
+
     def retrieve_valid_indexes(self) -> List[str]:
-        return [index for index in self.index_manager.index_map]
+        return list(self.index_manager.index_map.keys())
 
     def delete(self, **kwargs):
         if len(kwargs) == 0:
-            indexes_to_delete = self.index_manager.retrieve_all()
-        else:
-            indexes_to_delete = self.index_manager.retrieve(**kwargs)
-        indexes_to_delete = sorted(list(indexes_to_delete))  # Sort indexes for shards
+            raise ValueError
+        indexes_to_delete = self.index_manager.retrieve(**kwargs)
+        self._delete_indexes(indexes_to_delete)
+
+    def _delete_indexes(self, indexes: Union[Set[int], List[int]]) -> None:
+        indexes_to_delete = sorted(indexes)  # Sort indexes for shards
         self.size -= len(indexes_to_delete)  # Decrement the size of the table
         if indexes_to_delete:
             items_to_delete = self.shard_manager.retrieve(indexes_to_delete)
@@ -117,5 +122,12 @@ class PersistentTable(Table):
                 self.index_manager.unindex_item(item, index)
             self.unused_indexes.update(indexes_to_delete)
             self.shard_manager.delete(indexes_to_delete)
+        self.persist()
 
+    def delete_all(self):
+        empty_directory(self.directory)
+        self.shard_manager = ShardManager(self.directory)
+        self.index_manager = PersistentIndex(self.index_path)
+        self.size = 0
+        self.unused_indexes: SortedList = SortedList()
 

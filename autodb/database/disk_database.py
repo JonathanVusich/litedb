@@ -1,15 +1,17 @@
 import os
-from typing import Dict
+from typing import Dict, Generator
 
-from .database import Database
+from autodb.abc.database import Database
 from ..errors import DatabaseNotFound
 from ..table import PersistentTable
 from ..utils.path import load_tables
+from ..utils.io import empty_directory
 
 
 class DiskDatabase(Database):
 
     def __init__(self, directory: str):
+        self.selected_table = None
         self.tables: Dict[object, PersistentTable] = {}
         self.directory = directory
         if not os.path.exists(directory):
@@ -22,11 +24,23 @@ class DiskDatabase(Database):
             except DatabaseNotFound:
                 pass
 
+    def __iter__(self):
+        return iter(self.tables.keys())
+
+    def select(self, cls):
+        if self.selected_table is not None:
+            raise RuntimeError
+        if cls in self.tables:
+            self.selected_table = cls
+        else:
+            raise KeyError(f"No table of {cls} exists in this database!")
+        return self
+
     def __len__(self):
         return sum(len(table) for table in self.tables.values())
 
     def __repr__(self):
-        return f"DiskDatabase(directory={self.directory})"
+        return f"DiskDatabase({self.directory})"
 
     def insert(self, item: object) -> None:
         """Inserts an arbitrary Python object into the database. Do not use this
@@ -56,14 +70,41 @@ class DiskDatabase(Database):
                                                           table_type=first_item_type)})
                 self.tables[first_item_type].batch_insert(items)
 
-    def retrieve(self, class_type=None, **kwargs):
+    def retrieve(self, **kwargs):
+        if self.selected_table is None:
+            raise RuntimeError
         try:
-            return self.tables[class_type].retrieve(**kwargs)
-        except KeyError:
-            raise KeyError("No objects of this type were ever stored in this database!")
+            items = self.tables[self.selected_table].retrieve(**kwargs)
+        finally:
+            self.selected_table = None
+        return items
 
-    def delete(self, class_type=None, **kwargs):
+    def retrieve_all(self) -> Generator[object, None, None]:
+        if self.selected_table is None:
+            raise RuntimeError
         try:
-            return self.tables[class_type].delete(**kwargs)
-        except KeyError:
-            raise KeyError("No objects of this type were ever stored in this database!")
+            items = self.tables[self.selected_table].retrieve_all()
+        finally:
+            self.selected_table = None
+        return items
+
+    def retrieve_valid_indexes(self) -> list:
+        if self.selected_table is None:
+            raise RuntimeError
+        try:
+            indexes = self.tables[self.selected_table].retrieve_valid_indexes()
+        finally:
+            self.selected_table = None
+        return indexes
+
+    def delete(self, **kwargs):
+        if self.selected_table is None:
+            raise RuntimeError
+        try:
+            self.tables[self.selected_table].delete(**kwargs)
+        finally:
+            self.selected_table = None
+
+    def clear(self):
+        empty_directory(self.directory)
+        self.tables = {}

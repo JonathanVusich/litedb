@@ -1,10 +1,10 @@
 import pytest
-from autodb.index.manager import IndexManager
-from autodb.index.index import Index
-from autodb.utils.serialization import dump, load
-import pickle
-from ..test_table.table_test_objects import StandardTableObject, BadObject
+
 from autodb.errors import InvalidRange
+from autodb.index.index import Index
+from autodb.index.persistent_index import PersistentIndex
+from autodb.utils.serialization import dump
+from ..test_table.table_test_objects import StandardTableObject, BadObject
 
 
 @pytest.fixture()
@@ -15,7 +15,7 @@ def table_dir(tmpdir):
 @pytest.fixture()
 def index_manager(table_dir, tmpdir):
     index_dir = table_dir.join("index")
-    return IndexManager(str(index_dir))
+    return PersistentIndex(str(index_dir))
 
 
 @pytest.fixture(scope="session")
@@ -35,18 +35,18 @@ def test_prior_index_file_init(table_dir, tmpdir, index):
     index_dir = tmpdir.mkdir("table", "index")
     dump(index_dir.join("map"), index_map)
     dump(index_dir.join("blacklist"), index_blacklist)
-    manager = IndexManager(index_dir)
+    manager = PersistentIndex(index_dir)
     assert manager.index_blacklist == {"_bad"}
     assert manager.index_map == {"test": index}
 
 
 def test_persist_load(table_dir, tmpdir, index):
     index_dir = tmpdir.mkdir("table", "index")
-    manager = IndexManager(index_dir)
+    manager = PersistentIndex(index_dir)
     manager.index_blacklist = {"_bad"}
     manager.index_map = {"test": index}
     manager.persist()
-    new_manager = IndexManager(index_dir)
+    new_manager = PersistentIndex(index_dir)
     assert new_manager.index_blacklist == {"_bad"}
     assert new_manager.index_map == {"test": index}
 
@@ -62,7 +62,7 @@ def test_index_item(index_manager, table_dir):
     assert index_manager.index_map == {"x": index1, "y": index2}
 
     # Clear out the old index
-    index_manager = IndexManager(str(table_dir.join("index")))
+    index_manager = PersistentIndex(str(table_dir.join("index")))
 
     # test index blacklist
     bo = BadObject(12)

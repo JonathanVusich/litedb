@@ -1,32 +1,16 @@
+from typing import Optional, Set
+
 from .index import Index
+from ..abc.index_manager import IndexManager
 from ..errors import InvalidRange
 from ..utils.index import retrieve_possible_object_indexes
-from ..utils.serialization import dump, load
-from typing import Set, Optional
-import os
 
 
-class IndexManager:
+class MemoryIndex(IndexManager):
 
-    def __init__(self, index_path: str) -> None:
-        self.index_path = index_path
-        self.blacklist_path = os.path.join(self.index_path, "blacklist")
-        self.map_path = os.path.join(self.index_path, "map")
-        self.index_blacklist: Set[str] = set()
+    def __init__(self):
         self.index_map = {}
-        self.load()
-
-    def load(self) -> None:
-        index_map = load(self.map_path)
-        if index_map is not None:
-            self.index_map = index_map
-        blacklist = load(self.blacklist_path)
-        if blacklist is not None:
-            self.index_blacklist = blacklist
-
-    def persist(self) -> None:
-        dump(self.blacklist_path, self.index_blacklist)
-        dump(self.map_path, self.index_map)
+        self.index_blacklist = set()
 
     def index_item(self, item: object, index: int) -> None:
         """Inserts/creates index tables based on the given object."""
@@ -46,7 +30,8 @@ class IndexManager:
         """Removes indexes for the given object."""
         indexes = retrieve_possible_object_indexes(item)
         for var_name, value in indexes.items():
-            self.index_map[var_name].destroy(value, index)
+            if var_name not in self.index_blacklist:
+                self.index_map[var_name].destroy(value, index)
 
     def retrieve(self, **kwargs) -> Optional[Set[int]]:
         indexes: Set[int] = set()
@@ -79,10 +64,3 @@ class IndexManager:
                     indexes.intersection_update(results)
         if len(indexes) > 0:
             return indexes
-
-    def retrieve_all(self) -> Optional[Set[int]]:
-        indexes: Set[int] = set()
-        for index in self.index_map.values():
-            indexes.update(index.retrieve_range(None, None))
-        return indexes
-

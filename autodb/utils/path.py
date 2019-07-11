@@ -1,5 +1,5 @@
 from os import scandir, listdir, DirEntry, path
-from typing import List, Generator, Tuple, Dict
+from typing import Dict
 
 from ..errors import DatabaseNotFound
 
@@ -20,7 +20,7 @@ def is_table_folder(directory: DirEntry) -> bool:
 
 
 def is_table(file_name: str) -> bool:
-    return file_name.startswith("table") and len(file_name) > 5 and file_name[5:].isdigit()
+    return file_name.startswith("0x") and len(file_name) == 18
 
 
 def is_shard_file(file: DirEntry) -> bool:

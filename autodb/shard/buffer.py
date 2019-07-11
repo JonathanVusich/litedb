@@ -1,10 +1,10 @@
-from typing import List, Dict, Tuple, Union, Optional
 import os
 import pickle
-from .queue import ShardMRU
+from typing import List, Dict, Optional
 
-from ..utils.serialization import load, dump, serialize, deserialize, get_checksum
+from .queue import ShardMRU
 from ..utils.checksum import checksum
+from ..utils.serialization import load, dump, get_checksum
 
 SHARD_SIZE = 512
 
@@ -23,6 +23,7 @@ class ShardBuffer:
         self.mru = ShardMRU()
 
     def __iter__(self):
+        self.current_shard_index = -1
         return self
 
     def __next__(self) -> List[Optional[bytes]]:
@@ -31,7 +32,6 @@ class ShardBuffer:
             self._ensure_shard_loaded(self.current_shard_index)
             return self.loaded_shards[self.current_shard_index]
         else:
-            self.current_shard_index = -1
             raise StopIteration
 
     def __getitem__(self, shard_index: int) -> List[Optional[bytes]]:
