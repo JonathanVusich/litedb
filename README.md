@@ -9,8 +9,7 @@ autoDB is the perfect tool for small projects where speed is of less concern tha
 When you don't want to go through the hassle of setting up an SQL database but don't want to rely on JSON data storage, autoDB is the solution. It can serialize arbitrary Python classes, and allows users to perform index-based searches on stored objects. It also is written using no platform-specific APIs so that it is completely cross-platform.
 
 # Planned features
-- Multithreaded support
-- Database compression
+- Database compression using gzip
 - Encryption
 
 # Current performance/optimization problems
