@@ -6,6 +6,9 @@ from ..utils.serialization import dump, load
 
 class PersistentIndex(MemoryIndex):
 
+    """An extension of the in-memory index class that commits index
+    changes to disk."""
+
     def __init__(self, index_path: str) -> None:
         super().__init__()
         self.index_path = index_path
@@ -14,6 +17,7 @@ class PersistentIndex(MemoryIndex):
         self.load()
 
     def load(self) -> None:
+        """Loads the index from disk."""
         index_map = load(self.map_path)
         if index_map is not None:
             self.index_map = index_map
@@ -22,5 +26,6 @@ class PersistentIndex(MemoryIndex):
             self.index_blacklist = blacklist
 
     def persist(self) -> None:
+        """Persists the index to disk."""
         dump(self.blacklist_path, self.index_blacklist)
         dump(self.map_path, self.index_map)

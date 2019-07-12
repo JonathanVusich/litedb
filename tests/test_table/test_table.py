@@ -15,7 +15,7 @@ def test_table_insert_objects():
     table = MemoryTable()
 
     for i in range(10):
-        table.insert(StandardTableObject(i, -i))
+        table._insert(StandardTableObject(i, -i))
     assert len(table.table) == 10
 
 
@@ -23,7 +23,7 @@ def test_table_retrieve_well_formed_queries():
     table = MemoryTable()
 
     for i in range(10):
-        table.insert(StandardTableObject(i, -i))
+        table._insert(StandardTableObject(i, -i))
 
     # test x queries
 
@@ -85,7 +85,7 @@ def test_table_retrieve_bad_queries():
     table = MemoryTable()
 
     for i in range(10):
-        table.insert(StandardTableObject(i, -i))
+        table._insert(StandardTableObject(i, -i))
 
     with pytest.raises(IndexError):
         table.index_manager.retrieve(z=12)
@@ -105,9 +105,9 @@ def test_table_retrieve_bad_queries():
 
 def test_table_unused_indexes():
     table = MemoryTable()
-    table.insert(GoodObject(1))
-    table.insert(GoodObject(2))
+    table._insert(GoodObject(1))
+    table._insert(GoodObject(2))
     table.delete(good_index=GoodIndex(1))
     assert table.unused_indexes == {0}
-    table.insert(GoodObject(1))
+    table._insert(GoodObject(1))
     assert table.unused_indexes == set()

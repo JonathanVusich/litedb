@@ -8,6 +8,9 @@ from ..utils.index import retrieve_possible_object_indexes
 
 class MemoryIndex(IndexManager):
 
+    """This is a index manager that handles indexes for all of the different types
+    in the database."""
+
     def __init__(self):
         self.index_map = {}
         self.index_blacklist = set()
@@ -34,6 +37,7 @@ class MemoryIndex(IndexManager):
                 self.index_map[var_name].destroy(value, index)
 
     def retrieve(self, **kwargs) -> Optional[Set[int]]:
+        """Retrieves indexes that match the given parameters."""
         indexes: Set[int] = set()
         for x, key in enumerate(kwargs.keys()):
             if key in self.index_blacklist or key not in self.index_map:

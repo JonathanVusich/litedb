@@ -4,7 +4,7 @@ from typing import Optional
 MAX_SHARDS = 4
 
 
-class ShardMRU:
+class ShardLRU:
     """
     This is a most recently used cache that tracks when shards
     should be removed from memory.
@@ -14,6 +14,7 @@ class ShardMRU:
         self.mru = deque(maxlen=MAX_SHARDS+1)
 
     def update(self, shard_index: int) -> Optional[int]:
+        """Handles evicting old shards when a new one is added."""
         try:
             self.mru.remove(shard_index)
         except ValueError:

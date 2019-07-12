@@ -1,14 +1,14 @@
-from autodb.shard.queue import ShardMRU
+from autodb.shard.queue import ShardLRU
 from collections import deque
 
 
 def test_mru_instantiate():
-    mru = ShardMRU()
+    mru = ShardLRU()
     assert mru.mru.maxlen == 5
 
 
 def test_mru_add_shards():
-    mru = ShardMRU()
+    mru = ShardLRU()
     mru.update(1)
     mru.update(2)
     mru.update(3)
@@ -17,7 +17,7 @@ def test_mru_add_shards():
 
 
 def test_mru_set_priority():
-    mru = ShardMRU()
+    mru = ShardLRU()
     mru.update(1)
     mru.update(2)
     mru.update(3)

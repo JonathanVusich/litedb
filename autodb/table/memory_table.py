@@ -25,7 +25,7 @@ class MemoryTable(Table):
     def __len__(self):
         return self.size
 
-    def insert(self, item: object) -> None:
+    def _insert(self, item: object) -> None:
         byte_repr = pickle.dumps(item, protocol=pickle.HIGHEST_PROTOCOL)
         if len(self.unused_indexes) > 0:
             index = self.unused_indexes.pop()
