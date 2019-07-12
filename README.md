@@ -11,6 +11,8 @@ When you don't want to go through the hassle of setting up an SQL database but d
 # Planned features
 - Database compression using gzip
 - Encryption
+- Better docs
+- Useful examples
 
 # Current performance/optimization problems
 The main performance cost in autoDB is the serialization and deserialization of Python objects. autoDB uses the `pickle` library for this task since it is able to serialize arbitrary Python types, which removes the need for the user to define custom classes for serialization. `pickle` has a number of downsides though, including slow performance and security issues when unencrypted. An obvious solution to this problem is to use JSON for object serialization. However, this would require all stored objects to follow a predefined format and only contain data that is easy to serialize. This is a fairly large downside, as it would involve the user having to build their system for autoDB rather than just using it as a plug-and-play solution. The serialization engine will probably have to be implemented with JSON and tested extensively before this design decision can be fully resolved. Perhaps the user should have the option of choosing?
