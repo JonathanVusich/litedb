@@ -3,10 +3,6 @@ from autodb.utils.path import is_info, is_index, is_shard, is_table, valid_table
 import tempfile
 
 
-def test_is_table():
-    assert is_table("0xasdf23fwdg22fwde")
-
-
 def test_is_shard():
     assert is_shard("shard01")
     assert not is_shard("shard_01")

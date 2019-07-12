@@ -53,20 +53,20 @@ class PersistentTable(Table):
         return self.size
 
     @classmethod
-    def from_file(cls, directory: str):
+    def _from_file(cls, directory: str):
         return cls(directory=directory)
 
     @classmethod
-    def new(cls, directory: str, table_type):
+    def _new(cls, directory: str, table_type):
         return cls(directory=directory, table_type=table_type)
 
-    def persist(self):
+    def _persist(self):
         dump(os.path.join(self.info_path, "table_type"), self.table_type)
         dump(os.path.join(self.info_path, "size"), self.size)
         dump(os.path.join(self.info_path, "unused_indexes"), self.unused_indexes)
         self.index_manager.persist()
 
-    def insert(self, item: object) -> None:
+    def _insert(self, item: object) -> None:
         if len(self.unused_indexes) > 0:
             index = self.unused_indexes.pop()
         else:
@@ -76,9 +76,9 @@ class PersistentTable(Table):
             self.shard_manager.insert(item_dict)
         self.size += 1
         self.index_manager.index_item(item, index)
-        self.persist()
+        self._persist()
 
-    def batch_insert(self, item_list: List[object]) -> None:
+    def _batch_insert(self, item_list: List[object]) -> None:
         first_item_type = type(item_list[0])
         item_dict = SortedDict()
         for item in item_list:
@@ -93,7 +93,7 @@ class PersistentTable(Table):
         self.shard_manager.insert(item_dict)
         for index, item in item_dict.items():
             self.index_manager.index_item(item, index)
-        self.persist()
+        self._persist()
 
     def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
         if len(kwargs) == 0:
@@ -125,7 +125,7 @@ class PersistentTable(Table):
                 self.index_manager.unindex_item(item, index)
             self.unused_indexes.update(indexes_to_delete)
             self.shard_manager.delete(indexes_to_delete)
-        self.persist()
+        self._persist()
 
     def clear(self):
         empty_directory(self.directory)
@@ -133,4 +133,3 @@ class PersistentTable(Table):
         self.index_manager = PersistentIndex(self.index_path)
         self.size = 0
         self.unused_indexes: SortedList = SortedList()
-

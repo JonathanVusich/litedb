@@ -2,7 +2,7 @@ import os
 import pickle
 from typing import List, Dict, Optional
 
-from .queue import ShardMRU
+from .queue import ShardLRU
 from ..utils.checksum import checksum
 from ..utils.serialization import load, dump, get_checksum
 
@@ -20,7 +20,7 @@ class ShardBuffer:
         self.loaded_shards = {}
         self.shard_paths = shard_paths
         self.current_shard_index: int = -1
-        self.mru = ShardMRU()
+        self.mru = ShardLRU()
 
     def __iter__(self):
         self.current_shard_index = -1
@@ -39,12 +39,13 @@ class ShardBuffer:
         return self.loaded_shards[shard_index]
 
     def _create_new_shard_path(self) -> str:
+        """Creates a new shard path that will not collide with any others."""
         shard_name = f"shard{len(self.shard_paths)}"
         return os.path.join(self.table_dir, shard_name)
 
     def _ensure_shard_loaded(self, shard_index: int) -> None:
         """
-        This function ensures that the given shard index has been loaded.
+        Ensures that the given shard index has been loaded.
         :param shard_index:
         :return:
         """
@@ -59,11 +60,13 @@ class ShardBuffer:
                 self.shard_paths.update({shard_index: self._create_new_shard_path()})
 
     def _free_shard(self, shard: int) -> None:
+        """Clears a shard from memory and saves it to disk."""
         self._persist_shard(shard)
         if shard in self.loaded_shards:
             self.loaded_shards.pop(shard)
 
     def _persist_shard(self, shard: int) -> None:
+        """Saves a shard to disk."""
         if not self._shard_has_changes(shard):
             return
         if shard in self.loaded_shards:
@@ -72,17 +75,20 @@ class ShardBuffer:
             dump(shard_path, shard_data)
 
     def _calculate_checksum(self, shard: int) -> bytes:
+        """Gets the checksum of a given shard index."""
         if shard not in self.loaded_shards:
             raise ValueError("Cannot calculate checksum of persisted shard!")
         pickled_shard = pickle.dumps(self.loaded_shards[shard], pickle.HIGHEST_PROTOCOL)
         return checksum(pickled_shard)
 
     def _shard_has_changes(self, shard: int) -> bool:
+        """Uses checksums to calculate if a shard has changed."""
         if os.path.exists(self.shard_paths[shard]):
             saved_checksum = get_checksum(self.shard_paths[shard])
             return not saved_checksum == self._calculate_checksum(shard)
         return True
 
     def commit(self) -> None:
+        """Persists all shards."""
         for shard in self.loaded_shards:
             self._persist_shard(shard)
