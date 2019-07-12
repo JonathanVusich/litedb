@@ -3,7 +3,7 @@ from typing import List, Generator, Union, Set
 
 from sortedcontainers import SortedList, SortedDict
 
-from .table import Table
+from autodb.abc.table import Table
 from ..index import PersistentIndex
 from ..shard import ShardManager
 from ..utils.path import create_info_path, create_index_path
@@ -127,7 +127,7 @@ class PersistentTable(Table):
             self.shard_manager.delete(indexes_to_delete)
         self.persist()
 
-    def delete_all(self):
+    def clear(self):
         empty_directory(self.directory)
         self.shard_manager = ShardManager(self.directory)
         self.index_manager = PersistentIndex(self.index_path)

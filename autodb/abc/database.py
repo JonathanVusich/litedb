@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from .table import Table
 
 
 class Database(ABC):
@@ -44,53 +45,10 @@ class Database(ABC):
         raise NotImplemented
 
     @abstractmethod
-    def select(self, cls):
+    def select(self, cls) -> Table:
         """
         Select items of type `cls`.
         :param cls:
-        :return:
-        """
-
-    @abstractmethod
-    def retrieve(self, **kwargs):
-        """
-        Retrieves objects from the database based on the given
-        class_type and the given queries.
-        :param kwargs:
-        :return:
-        """
-        raise NotImplemented
-
-    @abstractmethod
-    def retrieve_all(self):
-        """
-        Retrieve all objects from the database sequentially.
-        :return:
-        """
-        raise NotImplemented
-
-    @abstractmethod
-    def retrieve_valid_indexes(self):
-        """
-        Retrieve the valid indexes for the selected table.
-        :return:
-        """
-        raise NotImplemented
-
-    @abstractmethod
-    def delete(self, **kwargs):
-        """
-        Deletes objects from the database based on the given
-        class_type and the given queries.
-        :param kwargs:
-        :return:
-        """
-        raise NotImplemented
-
-    @abstractmethod
-    def clear(self):
-        """
-        Delete all objects from the database.
         :return:
         """
         raise NotImplemented

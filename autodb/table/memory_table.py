@@ -1,7 +1,7 @@
 import pickle
 from typing import List, Optional, Generator, Set
 
-from .table import Table
+from autodb.abc.table import Table
 from ..index.memory_index import MemoryIndex
 
 
@@ -54,6 +54,8 @@ class MemoryTable(Table):
         return list(self.index_manager.index_map.keys())
 
     def delete(self, **kwargs):
+        if len(kwargs) == 0:
+            raise ValueError
         indexes_to_delete = self.index_manager.retrieve(**kwargs)
         self._delete(indexes_to_delete)
 
@@ -67,6 +69,6 @@ class MemoryTable(Table):
             self.unused_indexes.update(indexes)
             self.size -= len(indexes)
 
-    def delete_all(self):
+    def clear(self):
         indexes_to_delete = (index for index in range(len(self.table)) if index not in self.unused_indexes)
         self._delete(indexes_to_delete)

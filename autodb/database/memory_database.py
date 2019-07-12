@@ -1,7 +1,7 @@
-from itertools import chain
-from typing import Dict, Optional, Generator, Union
+from typing import Dict
 
 from autodb.abc.database import Database
+from autodb.abc.table import Table
 from ..table import MemoryTable
 
 
@@ -27,55 +27,8 @@ class MemoryDatabase(Database):
             self.tables.update({class_type: MemoryTable()})
         self.tables[class_type].insert(complex_object)
 
-    def select(self, cls):
-        if self.selected_table is not None:
-            raise RuntimeError
+    def select(self, cls) -> Table:
         if cls in self.tables:
-            self.selected_table = cls
+            return self.tables[cls]
         else:
             raise KeyError(f"No table of {cls} exists in this database!")
-        return self
-
-    def retrieve(self, **kwargs) -> Union[Optional[Generator[object, None, None]], chain]:
-        """
-        This method retrieves objects from the database depending on the user specified query.
-        Note: This method will not throw query errors when performing a search on the entire
-        database. Typically this type of behavior should be avoided.
-        :param kwargs:
-        :return:
-        """
-        if self.selected_table is None:
-            raise RuntimeError
-        try:
-            return self.tables[self.selected_table].retrieve(**kwargs)
-        finally:
-            self.selected_table = None
-
-    def retrieve_all(self):
-        if self.selected_table is None:
-            raise RuntimeError
-        try:
-            return self.tables[self.selected_table].retrieve_all()
-        finally:
-            self.selected_table = None
-
-    def retrieve_valid_indexes(self):
-        if self.selected_table is None:
-            raise RuntimeError
-        try:
-            return self.tables[self.selected_table].retrieve_valid_indexes()
-        finally:
-            self.selected_table = None
-
-    def delete(self, **kwargs) -> None:
-        if self.selected_table is None:
-            raise RuntimeError
-        if len(kwargs) == 0:
-            raise ValueError
-        try:
-            self.tables[self.selected_table].delete(**kwargs)
-        finally:
-            self.selected_table = None
-
-    def clear(self):
-        self.tables = {}

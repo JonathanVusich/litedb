@@ -32,5 +32,5 @@ class Table(ABC):
         raise NotImplemented
 
     @abstractmethod
-    def delete_all(self):
+    def clear(self):
         raise NotImplemented
