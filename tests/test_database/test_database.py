@@ -1,6 +1,5 @@
 import pytest
 from autodb.database import MemoryDatabase
-from autodb.errors import InvalidRange
 
 
 class SimpleRecord:
@@ -8,24 +7,61 @@ class SimpleRecord:
         self.x = x
 
 
-def test_table_retrieve():
-    database = MemoryDatabase()
+class ComplexRecord:
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+
+@pytest.fixture
+def database(tmpdir):
+    return MemoryDatabase()
+
+
+@pytest.fixture
+def test_objects():
+    return [ComplexRecord(x, x) for x in range(1000)]
+
+
+def test_iteration(database):
     database.insert(SimpleRecord(12))
-    with pytest.raises(KeyError):
-        database.select(MemoryDatabase)
-    with pytest.raises(InvalidRange):
-        database.select(SimpleRecord).retrieve(x=(1, 2, 3))
-    with pytest.raises(ValueError):
-        database.select(SimpleRecord).retrieve()
+    database.insert(ComplexRecord(12, 24))
+    for item in database:
+        assert item == SimpleRecord or item == ComplexRecord
 
 
-def test_table_delete():
-    database = MemoryDatabase()
+def test_insert(database):
     database.insert(SimpleRecord(12))
-    with pytest.raises(KeyError):
-        database.select(MemoryDatabase)
-    with pytest.raises(InvalidRange):
-        database.select(SimpleRecord).retrieve(x=(1, 2, 3))
-    with pytest.raises(ValueError):
-        database.select(SimpleRecord).delete()
+    database.insert(ComplexRecord(12, 24))
+    assert len(database) == 2
 
+
+def test_retrieve_valid(database, test_objects):
+    for item in test_objects:
+        database.insert(item)
+    item = list(database.select(ComplexRecord).retrieve(x=500))[0]
+    assert item.x == 500
+
+
+def test_retrieve_invalid(database, test_objects):
+    for item in test_objects:
+        database.insert(item)
+    with pytest.raises(KeyError):
+        list(database.select(SimpleRecord).retrieve(x=500))
+
+
+def test_delete_valid(database, test_objects):
+    for item in test_objects:
+        database.insert(item)
+    database.select(ComplexRecord).delete(x=500)
+    items = list(database.select(ComplexRecord).retrieve(x=500))
+    assert items == []
+    assert len(database) == 999
+
+
+def test_delete_invalid(database, test_objects):
+    for item in test_objects:
+        database.insert(item)
+    with pytest.raises(KeyError):
+        database.select(SimpleRecord).retrieve(x=500)

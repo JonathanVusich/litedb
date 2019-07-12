@@ -22,7 +22,7 @@ def load(path: str):
     if not os.path.exists(path) or not os.path.isfile(path):
         return
     with open(path, "rb") as file:
-        file.read(4)  # Discard the checksum
+        file.read(64)  # Discard the checksum
         pickle_data = file.read()
         return pickle.loads(pickle_data)
 

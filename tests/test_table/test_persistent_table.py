@@ -66,7 +66,7 @@ def test_batch_insert(table, table_dir):
 
 def test_delete_all(table, test_objects):
     table.batch_insert(test_objects)
-    table.delete_all()
+    table.clear()
     assert table.size == 0
     assert table.unused_indexes == []
     assert list(table.retrieve_all()) == []

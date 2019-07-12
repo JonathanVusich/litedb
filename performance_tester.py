@@ -1,48 +1,54 @@
-import inspect
-import sys
 import time
+from dataclasses import asdict
+from decimal import Decimal
 
-from diskcache import Cache
 from pcpartpicker.parts import Memory
+from tinydb import TinyDB, Query
 
-from autodb.table import PersistentTable
+from autodb import DiskDatabase, MemoryDatabase
 
 
 def main():
-    table = PersistentTable.from_file("C:/Users/apian/Desktop/autodb/")
+    parts = []
+    mem_database = MemoryDatabase()
+    database = DiskDatabase("C:/Users/apian/Desktop/autodb/")
+    for key in database:
+        table = database.select(key).retrieve_all()
+        for part in (list(table)):
+            parts.append(part)
+    print(f"Total memory parts to test with: {len(parts)}")
+    tinydb_database = TinyDB("C:/Users/apian/Desktop/tinydb/db.json")
+    print("Inserting into TinyDB...")
+    parts = parts * 10
     start = time.perf_counter()
-    values = list(table.retrieve(brand="G.Skill"))
-    print(time.perf_counter() - start)
+    parts = [dict((key, value) for key, value in asdict(part).items() if
+                  isinstance(value, (int, str, float, Decimal, bool, dict, list, set, frozenset, tuple, bytes))) for
+             part in parts]
+    tinydb_database.insert_multiple(parts)
+    print(f"Total time: {time.perf_counter() - start} secs")
 
+    part_lists = []
+    autodb = DiskDatabase("C:/Users/apian/Desktop/testdb/")
+    for key in database:
+        table = database.select(key).retrieve_all()
+        part_lists.append(list(table))
+    part_lists = part_lists * 10
+    start = time.perf_counter()
+    print("Inserting into AutoDB...")
+    for parts in part_lists:
+        autodb.batch_insert(parts)
+    print(f"Total time: {time.perf_counter() - start} secs")
 
-def get_size(obj, seen=None):
-    """Recursively finds size of objects in bytes"""
-    size = sys.getsizeof(obj)
-    if seen is None:
-        seen = set()
-    obj_id = id(obj)
-    if obj_id in seen:
-        return 0
-    # Important mark as seen *before* entering recursion to gracefully handle
-    # self-referential objects
-    seen.add(obj_id)
-    if hasattr(obj, '__dict__'):
-        for cls in obj.__class__.__mro__:
-            if '__dict__' in cls.__dict__:
-                d = cls.__dict__['__dict__']
-                if inspect.isgetsetdescriptor(d) or inspect.ismemberdescriptor(d):
-                    size += get_size(obj.__dict__, seen)
-                break
-    if isinstance(obj, dict):
-        size += sum((get_size(v, seen) for v in obj.values()))
-        size += sum((get_size(k, seen) for k in obj.keys()))
-    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray, type)):
-        size += sum((get_size(i, seen) for i in obj))
+    start = time.perf_counter()
+    print("Searching TinyDB for GeIL memory...")
+    geil = Query()
+    search_results = tinydb_database.search(geil.brand == "GeIL")
+    print(f"Total time: {time.perf_counter() - start} secs")
 
-    if hasattr(obj, '__slots__'):  # can have __slots__ with __dict__
-        size += sum(get_size(getattr(obj, s), seen) for s in obj.__slots__ if hasattr(obj, s))
-
-    return size
+    start = time.perf_counter()
+    print("Searching AutoDB for GeIL memory...")
+    results = list(autodb.select(Memory).retrieve(brand="GeIL"))
+    print(f"Total time: {time.perf_counter() - start} secs")
 
 
 if __name__ == "__main__":

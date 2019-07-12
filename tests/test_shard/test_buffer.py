@@ -81,14 +81,14 @@ def test_buffer_persist_shard(buffer, tmpdir):
     buffer._persist_shard(0)
     shard_dir = buffer.shard_paths[0]
     with open(shard_dir, "rb") as f:
-        f.read(4)
+        f.read(64)
         file_shard = pickle.loads(f.read())
     assert empty_shard == file_shard
 
     empty_shard[0] = b"test"
     buffer._persist_shard(0)
     with open(shard_dir, "rb") as f:
-        f.read(4)
+        f.read(64)
         file_shard = pickle.loads(f.read())
     assert file_shard[0] == b"test"
 
@@ -99,7 +99,7 @@ def test_buffer_free_shard(buffer):
     buffer._free_shard(0)
     shard_dir = buffer.shard_paths[0]
     with open(shard_dir, "rb") as f:
-        f.read(4)
+        f.read(64)
         file_shard = pickle.loads(f.read())
     assert file_shard == empty_shard
     assert 0 not in buffer.loaded_shards
