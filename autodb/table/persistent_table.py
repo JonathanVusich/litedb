@@ -78,7 +78,7 @@ class PersistentTable(Table):
         self.index_manager.index_item(item, index)
         self._persist()
 
-    def batch_insert(self, item_list: List[object]) -> None:
+    def _batch_insert(self, item_list: List[object]) -> None:
         first_item_type = type(item_list[0])
         item_dict = SortedDict()
         for item in item_list:
