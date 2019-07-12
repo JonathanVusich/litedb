@@ -55,7 +55,7 @@ class DiskDatabase(Database):
                 self.tables[first_item_type].batch_insert(items)
             except KeyError:
                 self.tables.update(
-                    {first_item_type: PersistentTable.new(os.path.join(self.directory, hex(abs(hash(first_item_type)))),
+                    {first_item_type: PersistentTable.new(os.path.join(self.directory, first_item_type.__name__),
                                                           table_type=first_item_type)})
                 self.tables[first_item_type].batch_insert(items)
 
