@@ -1,8 +1,6 @@
-from hashlib import blake2b
-import pickle
+from zlib import adler32
 
 
-def checksum(item: object) -> bytes:
-    """Returns a blake2b hash of a given object."""
-    pickled_item = pickle.dumps(item, pickle.HIGHEST_PROTOCOL)
-    return blake2b(pickled_item).digest()
+def checksum(byte_string: bytes) -> int:
+    """Returns an adler32 checksum of the given byte string."""
+    return adler32(byte_string)
