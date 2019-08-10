@@ -1,72 +1,73 @@
-import itertools
+import sys
 from io import BytesIO
 from typing import List, Optional
-from zlib import compress, decompress
-
-from numpy import int64
+from ..utils.checksum import checksum as chksum
 
 from ..utils.serialization import serialize, deserialize
 
 
 class Shard:
+    none_constant = b'\x80\x03N.'
+    none_hash = chksum(none_constant)
 
     def __init__(self, shard_size: int = 512) -> None:
         self.max_size: int = shard_size
-        self.checksum: int64 = int64(0)
-        self.binary_blobs: List[Optional[bytes]] = [None * self.max_size]
-        self.items: List[Optional[object]] = [None * self.max_size]
+        self.checksum = 0
+        self.binary_blobs: List[Optional[bytes]] = [None] * self.max_size
 
     def __getitem__(self, key: int) -> object:
-        if self.items[key] is None:
-            object_bytes = self.binary_blobs[key]
-            if object_bytes is None:
-                raise RuntimeError
-            deserialized_item = deserialize(decompress(object_bytes))
-            self.items[key] = deserialized_item
-            return deserialized_item
-        return self.items[key]
+        object_bytes = self.binary_blobs[key]
+        if object_bytes is None:
+            raise RuntimeError
+        deserialized_item = deserialize(object_bytes)
+        return deserialized_item
 
     def __setitem__(self, key: int, value: object) -> None:
-        self.items[key] = value
-        # TODO: Replace this call with a byte constant for None
-        self.binary_blobs[key] = compress(serialize(value))
+        if value is None:
+            self.binary_blobs[key] = self.none_constant
+            self.checksum = self.checksum ^ self.none_hash
+        else:
+            self.binary_blobs[key] = serialize(value)
+            self.checksum = self.checksum ^ chksum(self.binary_blobs[key])
 
     @classmethod
-    def from_filesystem(cls, bytes: BytesIO, preferred_size: int):
+    def from_bytes(cls, bytes: BytesIO, preferred_size: int):
         """This method loads a shard from a BytesIO instance, which will typically
         be a File object. The preferred size is simply meant as an upper bound on how
         large the shard will size itself to. If the shard's size is above the preferred
         size when loaded from the filesystem, it will simply trim itself as items get
         deleted until it is at the preferred size."""
 
+        # Seek back to the beginning of this byte buffer
+        bytes.seek(0)
+
         # Initialize the shard
         shard = cls(preferred_size)
 
         # Get the checksum
-        shard.checksum = int64(bytes.read(8))
+        num = int.from_bytes(bytes.read(4), byteorder=sys.byteorder, signed=False)
+        shard.checksum = num
 
         # Alias inner arrays for faster lookups
         blobs = shard.binary_blobs
-        items = shard.items
 
         for i in range(preferred_size):
-            object_size: int64 = int64(bytes.read(8))
-            if object_size == b"":
+            size_bytes = bytes.read(8)
+            if size_bytes == b"":
                 break
-            object_bytes = bytes.read(object_size.astype(int))
+            object_size: int = int.from_bytes(size_bytes, byteorder=sys.byteorder, signed=False)
+            object_bytes = bytes.read(object_size)
             blobs[i] = object_bytes
-            items[i] = deserialize(decompress(object_bytes))
 
         return shard
 
-    def to_bytes(self) -> bytes:
+    def to_bytes(self) -> BytesIO:
         byte_buffer = BytesIO()
-        byte_buffer.write(bytes(self.checksum.data))
+        checksum = self.checksum.to_bytes(4, byteorder=sys.byteorder, signed=False)
+        byte_buffer.write(checksum)
         for blob in self.binary_blobs:
             if blob is not None:
-                object_size = int64(len(blob))
-                byte_buffer.write(object_size)
+                object_size = len(blob)
+                byte_buffer.write(object_size.to_bytes(8, byteorder=sys.byteorder, signed=False))
                 byte_buffer.write(blob)
-        return byte_buffer.read()
-
-
+        return byte_buffer
