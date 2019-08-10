@@ -2,7 +2,7 @@ import os
 import pickle
 from typing import List, Dict, Optional
 
-from .queue import ShardLRU
+from .shardlru import ShardLRU
 from ..utils.checksum import checksum
 from ..utils.serialization import load, dump, get_checksum
 

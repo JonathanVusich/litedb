@@ -1,4 +1,4 @@
-from autodb.shard.queue import ShardLRU
+from autodb.shard.shardlru import ShardLRU
 from collections import deque
 
 
