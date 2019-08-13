@@ -1,7 +1,9 @@
 import os
 import pickle
+import sys
+from io import BytesIO
+from typing import Optional
 
-from .checksum import checksum
 from ..errors import PathError
 
 
@@ -13,7 +15,7 @@ def deserialize(raw_data: bytes):
     return pickle.loads(raw_data)
 
 
-def load(path: str):
+def load(path: str) -> Optional[bytes]:
     """
     This function returns a deserialized Python object.
     :param path:
@@ -22,33 +24,22 @@ def load(path: str):
     if not os.path.exists(path) or not os.path.isfile(path):
         return
     with open(path, "rb") as file:
-        file.read(64)  # Discard the checksum
-        pickle_data = file.read()
-        return pickle.loads(pickle_data)
+        file.read(4)  # Discard the checksum
+        return file.read()
 
 
-def dump(path: str, item: object) -> None:
+def dump(path: str, item: BytesIO) -> None:
     """
     This function saves an object to disk with a checksum.
     :param item:
     :param path:
     :return:
     """
-    pickled_data = pickle.dumps(item, pickle.HIGHEST_PROTOCOL)
-    chksum = checksum(pickled_data)
-    try:
-        if chksum == get_checksum(path):
-            return
-    except PathError:
-        pass
-    if not os.path.exists(os.path.dirname(path)):
-        os.mkdir(os.path.dirname(path))
     with open(path, "wb") as file:
-        file.write(chksum)
-        file.write(pickled_data)
+        file.write(item.read())
 
 
-def get_checksum(path: str) -> bytes:
+def get_checksum(path: str) -> int:
     """
     This is a utility function that returns the checksum
     for a given serialized object.
@@ -58,5 +49,5 @@ def get_checksum(path: str) -> bytes:
     if not os.path.exists(path) or not os.path.isfile(path):
         raise PathError
     with open(path, "rb") as file:
-        chksum = file.read(4)
-    return chksum
+        chksum_bytes = file.read(4)
+    return int.from_bytes(chksum_bytes, sys.byteorder)

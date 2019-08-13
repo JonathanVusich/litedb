@@ -1,9 +1,8 @@
 import os
-import pickle
-from typing import List, Dict, Optional
+from typing import Dict
 
 from .shardlru import ShardLRU
-from ..utils.checksum import checksum
+from ..shard.shard import Shard
 from ..utils.serialization import load, dump, get_checksum
 
 SHARD_SIZE = 512
@@ -17,16 +16,16 @@ class ShardBuffer:
 
     def __init__(self, table_dir: str, shard_paths: Dict[int, str]) -> None:
         self.table_dir = table_dir
-        self.loaded_shards = {}
+        self.loaded_shards: Dict[int, Shard] = {}
         self.shard_paths = shard_paths
         self.current_shard_index: int = -1
-        self.mru = ShardLRU()
+        self.lru = ShardLRU()
 
     def __iter__(self):
         self.current_shard_index = -1
         return self
 
-    def __next__(self) -> List[Optional[bytes]]:
+    def __next__(self) -> Shard:
         self.current_shard_index += 1
         if self.current_shard_index in self.shard_paths:
             self._ensure_shard_loaded(self.current_shard_index)
@@ -34,7 +33,7 @@ class ShardBuffer:
         else:
             raise StopIteration
 
-    def __getitem__(self, shard_index: int) -> List[Optional[bytes]]:
+    def __getitem__(self, shard_index: int) -> Shard:
         self._ensure_shard_loaded(shard_index)
         return self.loaded_shards[shard_index]
 
@@ -49,14 +48,14 @@ class ShardBuffer:
         :param shard_index:
         :return:
         """
-        shard_to_persist = self.mru.update(shard_index)
+        shard_to_persist = self.lru.update(shard_index)
         if shard_to_persist is not None:
             self._free_shard(shard_to_persist)
         if shard_index not in self.loaded_shards:
             if shard_index in self.shard_paths:
                 self.loaded_shards.update({shard_index: load(self.shard_paths[shard_index])})
             else:
-                self.loaded_shards.update({shard_index: [None] * SHARD_SIZE})
+                self.loaded_shards.update({shard_index: Shard()})
                 self.shard_paths.update({shard_index: self._create_new_shard_path()})
 
     def _free_shard(self, shard: int) -> None:
@@ -74,18 +73,11 @@ class ShardBuffer:
             shard_data = self.loaded_shards[shard]
             dump(shard_path, shard_data)
 
-    def _calculate_checksum(self, shard: int) -> bytes:
-        """Gets the checksum of a given shard index."""
-        if shard not in self.loaded_shards:
-            raise ValueError("Cannot calculate checksum of persisted shard!")
-        pickled_shard = pickle.dumps(self.loaded_shards[shard], pickle.HIGHEST_PROTOCOL)
-        return checksum(pickled_shard)
-
     def _shard_has_changes(self, shard: int) -> bool:
         """Uses checksums to calculate if a shard has changed."""
         if os.path.exists(self.shard_paths[shard]):
             saved_checksum = get_checksum(self.shard_paths[shard])
-            return not saved_checksum == self._calculate_checksum(shard)
+            return not saved_checksum == self.loaded_shards[shard].checksum
         return True
 
     def commit(self) -> None:

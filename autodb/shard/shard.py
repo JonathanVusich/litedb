@@ -1,7 +1,7 @@
 import sys
 from io import BytesIO
 from typing import List, Optional
-from ..utils.checksum import checksum as chksum
+from ..utils.checksum import chksum
 
 from ..utils.serialization import serialize, deserialize
 

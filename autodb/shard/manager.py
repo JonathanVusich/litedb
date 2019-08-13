@@ -23,28 +23,25 @@ class ShardManager:
         :param indexes:
         :return:
         """
-        ds = deserialize  # For faster local lookup
         shard_indexes = [calculate_shard_number(index) for index in indexes]
         shard_indexes.sort(key=lambda x: x[0])
         for shard, index in shard_indexes:
-            yield ds(self.buffer[shard][index])
+            yield self.buffer[shard][index]
 
     def retrieve_all(self) -> Generator[object, None, None]:
         """
         Retrieves all objects in the table.
         :return:
         """
-        ds = deserialize
         for shard in self.buffer:
             for byte in filter(lambda x: x is not None, shard):
-                yield ds(byte)
+                yield byte
 
     def insert(self, items: SortedDict) -> None:
         """Inserts and persists the given collection of items."""
-        sl = serialize  # local for faster performance
         prepped_items = SortedDict()
         for key, value in items.items():
-            prepped_items[calculate_shard_number(key)] = sl(value)
+            prepped_items[calculate_shard_number(key)] = value
         for shard_index, value in prepped_items.items():
             shard, index = shard_index
             self.buffer[shard][index] = value

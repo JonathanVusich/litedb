@@ -5,6 +5,7 @@ import pytest
 
 from autodb.shard.buffer import ShardBuffer
 from autodb.utils.serialization import dump
+from autodb.shard.shard import Shard
 
 
 @pytest.fixture()
@@ -12,8 +13,8 @@ def buffer(tmpdir):
     temp_directory = tmpdir.mkdir("table")
     table_dir = str(temp_directory)
     paths = {0: str(temp_directory.join("shard0"))}
-    shard = [None] * 512
-    dump(temp_directory.join("shard0"), shard)
+    shard = Shard()
+    dump(temp_directory.join("shard0"), shard.to_bytes())
     buffer = ShardBuffer(table_dir, paths)
     return buffer
 
@@ -27,7 +28,7 @@ def test_buffer_init(buffer):
     assert buffer.current_shard_index == -1
     assert isinstance(buffer.table_dir, str)
     assert 0 in buffer.shard_paths
-    assert buffer.mru.mru == deque([])
+    assert buffer.lru.mru == deque([])
 
 
 def test_empty_buffer_iter(empty_buffer):
@@ -45,7 +46,7 @@ def test_buffer_get_item(buffer):
     empty_shard = buffer[0]
     assert len(buffer.shard_paths) == 1
     assert len(buffer.loaded_shards) == 1
-    assert empty_shard == [None] * 512
+    assert empty_shard == Shard()
     second_shard = buffer[1]
     assert len(buffer.shard_paths) == 2
     assert len(buffer.loaded_shards) == 2
