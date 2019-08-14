@@ -15,7 +15,6 @@ class ObjectNoClassVars:
 
 
 class ObjectClassVars:
-
     class_var = "class_var"
 
     def __init__(self):

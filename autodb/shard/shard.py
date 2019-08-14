@@ -1,8 +1,8 @@
 import sys
 from io import BytesIO
 from typing import List, Optional
-from ..utils.checksum import chksum
 
+from ..utils.checksum import chksum
 from ..utils.serialization import serialize, deserialize
 
 
@@ -28,7 +28,7 @@ class Shard:
             self.checksum = self.checksum ^ chksum(self.binary_blobs[key])
 
     @classmethod
-    def from_bytes(cls, bytes: BytesIO, preferred_size: int):
+    def from_bytes(cls, bytes: BytesIO, preferred_size: int = 512):
         """This method loads a shard from a BytesIO instance, which will typically
         be a File object. The preferred size is simply meant as an upper bound on how
         large the shard will size itself to. If the shard's size is above the preferred

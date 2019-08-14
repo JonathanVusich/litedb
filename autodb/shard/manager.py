@@ -4,13 +4,11 @@ from sortedcontainers import SortedDict
 
 from .buffer import ShardBuffer
 from ..utils.path import get_shard_file_paths
-from ..utils.serialization import serialize, deserialize
 
 SHARD_SIZE = 512
 
 
 class ShardManager:
-
     """This class handles the high-level shard operations by manipulating the shard buffer."""
 
     def __init__(self, table_dir: str) -> None:

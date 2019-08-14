@@ -22,8 +22,6 @@ def test_serialize():
     for i in range(shard.max_size):
         shard[i] = i
     bytes = shard.to_bytes()
-    deserialized_shard = Shard.from_bytes(bytes, 512)
+    deserialized_shard = Shard.from_bytes(bytes)
     assert deserialized_shard.checksum == shard.checksum
     assert deserialized_shard.binary_blobs == shard.binary_blobs
-
-
