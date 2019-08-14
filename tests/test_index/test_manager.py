@@ -3,7 +3,7 @@ import pytest
 from autodb.errors import InvalidRange
 from autodb.index.index import Index
 from autodb.index.persistent_index import PersistentIndex
-from autodb.utils.serialization import dump
+from autodb.utils.serialization import dump_object
 from ..test_table.table_test_objects import StandardTableObject, BadObject
 
 
@@ -33,8 +33,8 @@ def test_prior_index_file_init(table_dir, tmpdir, index):
     index_map = {"test": index}
     index_blacklist = {"_bad"}
     index_dir = tmpdir.mkdir("table", "index")
-    dump(index_dir.join("map"), index_map)
-    dump(index_dir.join("blacklist"), index_blacklist)
+    dump_object(index_dir.join("map"), index_map)
+    dump_object(index_dir.join("blacklist"), index_blacklist)
     manager = PersistentIndex(index_dir)
     assert manager.index_blacklist == {"_bad"}
     assert manager.index_map == {"test": index}
