@@ -15,28 +15,48 @@ def deserialize(raw_data: bytes):
     return pickle.loads(raw_data)
 
 
-def load(path: str) -> Optional[bytes]:
+def load_object(path: str) -> object:
+    if not os.path.exists(path) or not os.path.isfile(path):
+        return
+    with open(path, "rb") as file:
+        return pickle.load(file)
+
+
+def dump_object(path: str, item: object) -> None:
+    if not os.path.exists(os.path.dirname(path)):
+        os.mkdir(os.path.dirname(path))
+    with open(path, "wb") as file:
+        pickle.dump(item, file, pickle.HIGHEST_PROTOCOL)
+
+
+def load_shard(path: str) -> Optional[BytesIO]:
     """
-    This function returns a deserialized Python object.
+    This function returns a serialized Python object.
     :param path:
     :return:
     """
     if not os.path.exists(path) or not os.path.isfile(path):
         return
     with open(path, "rb") as file:
-        file.read(4)  # Discard the checksum
-        return file.read()
+        file.seek(0)
+        bytes_io = BytesIO(file.read())
+        bytes_io.seek(0)
+        return bytes_io
 
 
-def dump(path: str, item: BytesIO) -> None:
+def dump_shard(path: str, item: BytesIO) -> None:
     """
-    This function saves an object to disk with a checksum.
+    This function saves an object with a checksum to disk.
     :param item:
     :param path:
     :return:
     """
+    if not os.path.exists(os.path.dirname(path)):
+        os.mkdir(os.path.dirname(path))
     with open(path, "wb") as file:
+        file.seek(0)
         file.write(item.read())
+        file.truncate()
 
 
 def get_checksum(path: str) -> int:
