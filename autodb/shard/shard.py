@@ -17,10 +17,7 @@ class Shard:
 
     def __getitem__(self, key: int) -> object:
         object_bytes = self.binary_blobs[key]
-        if object_bytes is None:
-            raise RuntimeError
-        deserialized_item = deserialize(object_bytes)
-        return deserialized_item
+        return object_bytes if object_bytes is None else deserialize(object_bytes)
 
     def __setitem__(self, key: int, value: object) -> None:
         if value is None:
@@ -40,6 +37,7 @@ class Shard:
 
         # Seek back to the beginning of this byte buffer
         bytes.seek(0)
+        value = bytes.getvalue()
 
         # Initialize the shard
         shard = cls(preferred_size)
@@ -68,6 +66,8 @@ class Shard:
         for blob in self.binary_blobs:
             if blob is not None:
                 object_size = len(blob)
-                byte_buffer.write(object_size.to_bytes(8, byteorder=sys.byteorder, signed=False))
+                object_size = object_size.to_bytes(8, byteorder=sys.byteorder, signed=False)
+                byte_buffer.write(object_size)
                 byte_buffer.write(blob)
+        byte_buffer.seek(0)
         return byte_buffer
