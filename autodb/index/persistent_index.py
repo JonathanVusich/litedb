@@ -1,7 +1,7 @@
 import os
 
 from .memory_index import MemoryIndex
-from ..utils.serialization import dump, load
+from ..utils.serialization import dump_object, load_object
 
 
 class PersistentIndex(MemoryIndex):
@@ -18,14 +18,14 @@ class PersistentIndex(MemoryIndex):
 
     def load(self) -> None:
         """Loads the index from disk."""
-        index_map = load(self.map_path)
+        index_map = load_object(self.map_path)
         if index_map is not None:
             self.index_map = index_map
-        blacklist = load(self.blacklist_path)
+        blacklist = load_object(self.blacklist_path)
         if blacklist is not None:
             self.index_blacklist = blacklist
 
     def persist(self) -> None:
         """Persists the index to disk."""
-        dump(self.blacklist_path, self.index_blacklist)
-        dump(self.map_path, self.index_map)
+        dump_object(self.blacklist_path, self.index_blacklist)
+        dump_object(self.map_path, self.index_map)

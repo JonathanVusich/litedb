@@ -8,7 +8,7 @@ from ..index import PersistentIndex
 from ..shard import ShardManager
 from ..utils.path import create_info_path, create_index_path
 from ..utils.io import empty_directory
-from ..utils.serialization import load, dump
+from ..utils.serialization import load_object, dump_object
 
 
 class PersistentTable(Table):
@@ -40,9 +40,9 @@ class PersistentTable(Table):
             self.size = 0
             self.unused_indexes: SortedList = SortedList()
         elif table_type is None:
-            self.table_type = load(os.path.join(self.info_path, "table_type"))
-            self.size = load(os.path.join(self.info_path, "size"))
-            self.unused_indexes: SortedList = load(os.path.join(self.info_path, "unused_indexes"))
+            self.table_type = load_object(os.path.join(self.info_path, "table_type"))
+            self.size = load_object(os.path.join(self.info_path, "size"))
+            self.unused_indexes: SortedList = load_object(os.path.join(self.info_path, "unused_indexes"))
         else:
             raise AttributeError
 
@@ -61,9 +61,9 @@ class PersistentTable(Table):
         return cls(directory=directory, table_type=table_type)
 
     def _persist(self):
-        dump(os.path.join(self.info_path, "table_type"), self.table_type)
-        dump(os.path.join(self.info_path, "size"), self.size)
-        dump(os.path.join(self.info_path, "unused_indexes"), self.unused_indexes)
+        dump_object(os.path.join(self.info_path, "table_type"), self.table_type)
+        dump_object(os.path.join(self.info_path, "size"), self.size)
+        dump_object(os.path.join(self.info_path, "unused_indexes"), self.unused_indexes)
         self.index_manager.persist()
 
     def _insert(self, item: object) -> None:

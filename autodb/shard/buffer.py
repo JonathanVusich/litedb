@@ -3,7 +3,7 @@ from typing import Dict
 
 from .shardlru import ShardLRU
 from ..shard.shard import Shard
-from ..utils.serialization import load, dump, get_checksum
+from ..utils.serialization import load_shard, dump_shard, get_checksum
 
 SHARD_SIZE = 512
 
@@ -53,7 +53,7 @@ class ShardBuffer:
             self._free_shard(shard_to_persist)
         if shard_index not in self.loaded_shards:
             if shard_index in self.shard_paths:
-                self.loaded_shards.update({shard_index: load(self.shard_paths[shard_index])})
+                self.loaded_shards.update({shard_index: Shard.from_bytes(load_shard(self.shard_paths[shard_index]), SHARD_SIZE)})
             else:
                 self.loaded_shards.update({shard_index: Shard()})
                 self.shard_paths.update({shard_index: self._create_new_shard_path()})
@@ -71,7 +71,7 @@ class ShardBuffer:
         if shard in self.loaded_shards:
             shard_path = self.shard_paths[shard]
             shard_data = self.loaded_shards[shard]
-            dump(shard_path, shard_data)
+            dump_shard(shard_path, shard_data.to_bytes())
 
     def _shard_has_changes(self, shard: int) -> bool:
         """Uses checksums to calculate if a shard has changed."""
