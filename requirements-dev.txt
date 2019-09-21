@@ -3,3 +3,4 @@ coverage
 pytest-cov
 hypothesis
 coveralls
+pcpartpicker==2.1.1
