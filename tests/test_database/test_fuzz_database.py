@@ -10,7 +10,7 @@ from autodb.abc import Database
 
 @fixture
 def test_data():
-    with open("fuzz_test", "rb") as file:
+    with open("tests/test_database/fuzz_test", "rb") as file:
         return pickle.load(file)
 
 
