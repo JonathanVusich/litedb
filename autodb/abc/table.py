@@ -12,10 +12,6 @@ class Table(ABC):
         raise NotImplemented
 
     @abstractmethod
-    def _insert(self, item):
-        raise NotImplemented
-
-    @abstractmethod
     def retrieve(self, **kwargs):
         """Filters search results."""
         raise NotImplemented
@@ -25,8 +21,9 @@ class Table(ABC):
         """Returns a generator over all of the items in the table."""
         raise NotImplemented
 
+    @property
     @abstractmethod
-    def retrieve_valid_indexes(self):
+    def indexes(self):
         """Retrieves all of the valid indexes for this type."""
         raise NotImplemented
 
