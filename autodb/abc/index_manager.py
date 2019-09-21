@@ -11,7 +11,7 @@ class IndexManager(ABC):
         :param item
         :param index
         """
-        pass
+        raise NotImplemented
 
     @abstractmethod
     def unindex_item(self, item: object, index: int) -> None:
@@ -21,7 +21,7 @@ class IndexManager(ABC):
         :param index:
         :return:
         """
-        pass
+        raise NotImplemented
 
     @abstractmethod
     def retrieve(self, **kwargs) -> Optional[Set[int]]:
@@ -30,4 +30,4 @@ class IndexManager(ABC):
         :param kwargs:
         :return:
         """
-        pass
+        raise NotImplemented
