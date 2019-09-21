@@ -5,7 +5,6 @@ from ..utils.serialization import dump_object, load_object
 
 
 class PersistentIndex(MemoryIndex):
-
     """An extension of the in-memory index class that commits index
     changes to disk."""
 

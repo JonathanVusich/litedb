@@ -7,7 +7,6 @@ from ..utils.serialization import serialize, deserialize
 
 
 class Shard:
-
     # Constants for None so they don't constantly have to be recalculated
     none_constant = b'\x80\x03N.'
     none_hash = chksum(none_constant)

@@ -2,7 +2,6 @@ from typing import Union, Optional, Set
 
 from sortedcontainers import SortedDict
 
-
 NoneType = type(None)
 
 

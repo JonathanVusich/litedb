@@ -1,8 +1,8 @@
 import os
 from typing import Dict
 
-from .shardlru import ShardLRU
 from .shard import Shard
+from .shardlru import ShardLRU
 from ..utils.serialization import load_shard, dump_shard, get_checksum
 
 SHARD_SIZE = 512

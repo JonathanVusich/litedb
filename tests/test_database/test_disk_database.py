@@ -1,6 +1,7 @@
+import pytest
+
 from autodb.database import DiskDatabase
 from .test_database import SimpleRecord
-import pytest
 
 
 class ComplexRecord:

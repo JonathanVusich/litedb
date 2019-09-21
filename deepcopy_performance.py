@@ -1,8 +1,5 @@
-from copy import deepcopy
-from copy import copy
-from timeit import timeit
-import pickle
 import sys
+
 
 class A:
     def __init__(self):
@@ -31,6 +28,7 @@ class B:
 def main():
     shard = [None] * 512
     print(sys.getsizeof(shard))
+
 
 if __name__ == "__main__":
     main()

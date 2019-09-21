@@ -4,7 +4,7 @@ class InvalidRange(Exception):
 
 class PathError(Exception):
     pass
-  
+
 
 class DatabaseNotFound(Exception):
     pass
