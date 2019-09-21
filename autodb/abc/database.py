@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from .table import Table
 
 
@@ -31,6 +32,15 @@ class Database(ABC):
         """
         Should print out a summary of all of the object
         tables.
+        :return:
+        """
+        raise NotImplemented
+
+    @property
+    @abstractmethod
+    def tables(self):
+        """
+        Should return a view of all of the tables in this database.
         :return:
         """
         raise NotImplemented
