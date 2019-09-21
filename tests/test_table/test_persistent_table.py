@@ -32,24 +32,12 @@ def test_new_table(table_dir):
     assert table.unused_indexes == SortedList()
 
 
-def test_persist(table, table_dir):
-    table.unused_indexes.add(12)
-    table.unused_indexes.add(13)
-    table.size = 1
-    table._persist()
-    del table
-    table = PersistentTable._from_file(table_dir)
-    assert table.size == 1
-    assert table.table_type == GoodObject
-    assert table.unused_indexes.pop() == 13
-    assert table.unused_indexes.pop() == 12
-
-
 def test_insert(table, table_dir):
     good_object = GoodObject(12)
     good_object2 = GoodObject(13)
     table._insert(good_object)
     table._insert(good_object2)
+    table.commit()
     del table
     table = PersistentTable._from_file(table_dir)
     assert table.table_type == GoodObject

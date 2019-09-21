@@ -1,4 +1,3 @@
-
 class BadIndex:
 
     def __init__(self, integer: int):

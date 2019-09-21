@@ -69,10 +69,8 @@ def test_buffer_ensure_shard_loaded(buffer):
     first_shard = buffer[0]
     first_shard[0] = b"test"
     # fill up the buffer
-    buffer._ensure_shard_loaded(1)
-    buffer._ensure_shard_loaded(2)
-    buffer._ensure_shard_loaded(3)
-    buffer._ensure_shard_loaded(4)
+    for i in range(1, 65):
+        buffer._ensure_shard_loaded(i)
     # shard should be evicted
     assert 0 not in buffer.loaded_shards
     assert 0 in buffer.shard_paths

@@ -45,7 +45,7 @@ def test_persist_load(table_dir, tmpdir, index):
     manager = PersistentIndex(index_dir)
     manager.index_blacklist = {"_bad"}
     manager.index_map = {"test": index}
-    manager.persist()
+    manager.commit()
     new_manager = PersistentIndex(index_dir)
     assert new_manager.index_blacklist == {"_bad"}
     assert new_manager.index_map == {"test": index}
@@ -126,7 +126,6 @@ def test_table_retrieve_well_formed_queries(index_manager):
 
 
 def test_table_retrieve_bad_queries(index_manager):
-
     for i in range(10):
         index_manager.index_item(StandardTableObject(i, -i), i)
 
@@ -144,4 +143,3 @@ def test_table_retrieve_bad_queries(index_manager):
 
     with pytest.raises(ValueError):
         index_manager.retrieve(x=(1, b"test"))
-
