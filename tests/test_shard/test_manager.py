@@ -1,8 +1,8 @@
 import pytest
 from sortedcontainers import SortedDict
 
-from autodb.shard.manager import ShardManager
-from autodb.utils.serialization import serialize, dump_object
+from pydb.shard.manager import ShardManager
+from pydb.utils.serialization import serialize, dump_object
 
 
 @pytest.fixture()

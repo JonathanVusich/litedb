@@ -1,4 +1,4 @@
-from autodb.shard.shard import Shard
+from pydb.shard.shard import Shard
 
 
 def test_basic_init():

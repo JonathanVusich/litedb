@@ -8,8 +8,8 @@ def read(file_name: str):
 
 
 setup(
-    name="autodb",
-    version="0.0.0",
+    name="pydb",
+    version="1.0.0",
     author="Jonathan Vusich",
     author_email="jonathanvusich@gmail.com",
     description="A pure Python NoSQL database",
@@ -17,7 +17,7 @@ setup(
     long_description_content_type="text/markdown",
     license="MIT",
     keywords="nosql database python",
-    url="https://github.com/JonathanVusich/autodb",
+    url="https://github.com/JonathanVusich/pyDB",
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=read("requirements.txt"),
     classifiers=[

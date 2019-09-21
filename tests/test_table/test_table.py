@@ -1,7 +1,7 @@
 import pytest
 
-from autodb.errors import InvalidRange
-from autodb.table import MemoryTable
+from pydb.errors import InvalidRange
+from pydb.table import MemoryTable
 from .table_test_objects import GoodObject, StandardTableObject, GoodIndex
 
 

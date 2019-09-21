@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from autodb.utils.path import is_info, is_index, is_shard, valid_table_contents
+from pydb.utils.path import is_info, is_index, is_shard, valid_table_contents
 
 
 def test_is_shard():

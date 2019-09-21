@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from autodb.utils.index import retrieve_possible_object_indexes
+from pydb.utils.index import retrieve_possible_object_indexes
 from .object_utils_test_objects import ObjectNoClassVars, ObjectClassVars, ObjectUnderscoreVars
 
 

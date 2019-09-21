@@ -1,6 +1,6 @@
 from typing import Optional, Set
 
-from autodb.abc import IndexManager
+from pydb.abc import IndexManager
 from .index import Index
 from ..errors import InvalidRange
 from ..utils.index import retrieve_possible_object_indexes

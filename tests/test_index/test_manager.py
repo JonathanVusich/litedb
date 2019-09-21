@@ -1,9 +1,9 @@
 import pytest
 
-from autodb.errors import InvalidRange
-from autodb.index.index import Index
-from autodb.index.persistent_index import PersistentIndex
-from autodb.utils.serialization import dump_object
+from pydb.errors import InvalidRange
+from pydb.index.index import Index
+from pydb.index.persistent_index import PersistentIndex
+from pydb.utils.serialization import dump_object
 from ..test_table.table_test_objects import StandardTableObject, BadObject
 
 

@@ -4,7 +4,7 @@ import pytest
 from hypothesis import given
 from hypothesis.strategies import integers
 
-from autodb.database import MemoryDatabase
+from pydb.database import MemoryDatabase
 from ..test_table.table_test_objects import BadAndGoodObject, GoodObject, BadObject, GoodIndex
 
 

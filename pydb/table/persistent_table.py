@@ -3,7 +3,7 @@ from typing import List, Generator, Union, Set
 
 from sortedcontainers import SortedList, SortedDict
 
-from autodb.abc.table import Table
+from pydb.abc.table import Table
 from ..index import PersistentIndex
 from ..shard import ShardManager
 from ..utils.io import empty_directory
