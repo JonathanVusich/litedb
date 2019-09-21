@@ -17,12 +17,12 @@ setup(
     long_description_content_type="text/markdown",
     license="MIT",
     keywords="nosql database python",
-    url="https://github.com/JonathanVusich/pyDB",
+    url="https://github.com/JonathanVusich/pydb",
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=read("requirements.txt"),
     classifiers=[
-        "Development Status :: 1 - Development - Unstable",
-        "Topic :: Utilities",
-        "License :: OSI Approved :: MIT",
+        "Development Status :: 4 - Beta",
+        "Topic :: Database",
+        "License :: OSI Approved :: MIT License",
     ],
 )
