@@ -1,4 +1,5 @@
 import pytest
+
 from autodb.database import MemoryDatabase
 
 

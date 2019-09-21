@@ -1,9 +1,8 @@
-import cProfile
-from pytest import fixture
-import os
-from pcpartpicker import API
-from random import choice, shuffle
 import pickle
+from random import shuffle
+
+from pytest import fixture
+
 from autodb import DiskDatabase, MemoryDatabase
 from autodb.abc import Database
 
