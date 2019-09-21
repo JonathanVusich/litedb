@@ -2,7 +2,7 @@ import os
 from typing import Dict
 
 from .shardlru import ShardLRU
-from ..shard.shard import Shard
+from .shard import Shard
 from ..utils.serialization import load_shard, dump_shard, get_checksum
 
 SHARD_SIZE = 512
@@ -53,7 +53,8 @@ class ShardBuffer:
             self._free_shard(shard_to_persist)
         if shard_index not in self.loaded_shards:
             if shard_index in self.shard_paths:
-                self.loaded_shards.update({shard_index: Shard.from_bytes(load_shard(self.shard_paths[shard_index]), SHARD_SIZE)})
+                self.loaded_shards.update(
+                    {shard_index: Shard.from_bytes(load_shard(self.shard_paths[shard_index]), SHARD_SIZE)})
             else:
                 self.loaded_shards.update({shard_index: Shard()})
                 self.shard_paths.update({shard_index: self._create_new_shard_path()})

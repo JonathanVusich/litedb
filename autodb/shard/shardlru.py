@@ -8,9 +8,9 @@ class ShardLRU:
     should be removed from memory.
     """
 
-    def __init__(self, max_len=4) -> None:
+    def __init__(self, max_len=64) -> None:
         self.max_len: int = max_len
-        self.mru = deque(maxlen=max_len+1)
+        self.mru = deque(maxlen=max_len + 1)
 
     def update(self, shard_index: int) -> Optional[int]:
         """Handles evicting old shards when a new one is added."""
@@ -21,5 +21,3 @@ class ShardLRU:
         self.mru.appendleft(shard_index)
         if len(self.mru) > self.max_len:
             return self.mru.pop()
-
-

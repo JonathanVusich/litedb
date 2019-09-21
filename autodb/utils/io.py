@@ -15,6 +15,7 @@ def rmdir(directory):
 
 
 def empty_directory(directory) -> None:
+    """Removes the contents of a directory."""
     with os.scandir(directory) as dir_contents:
         for entry in dir_contents:
             if entry.is_file():

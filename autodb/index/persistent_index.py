@@ -25,7 +25,7 @@ class PersistentIndex(MemoryIndex):
         if blacklist is not None:
             self.index_blacklist = blacklist
 
-    def persist(self) -> None:
+    def commit(self) -> None:
         """Persists the index to disk."""
         dump_object(self.blacklist_path, self.index_blacklist)
         dump_object(self.map_path, self.index_map)

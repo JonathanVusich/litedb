@@ -1,13 +1,14 @@
 from typing import Optional, Set
 
+from autodb.abc import IndexManager
 from .index import Index
-from ..abc.index_manager import IndexManager
 from ..errors import InvalidRange
 from ..utils.index import retrieve_possible_object_indexes
 
+NoneType = type(None)
+
 
 class MemoryIndex(IndexManager):
-
     """This is a index manager that handles indexes for all of the different types
     in the database."""
 
@@ -22,7 +23,12 @@ class MemoryIndex(IndexManager):
             if var_name in self.index_blacklist:
                 continue
             if var_name not in self.index_map:
-                self.index_map.update({var_name: Index(type(value))})
+                # if the first item value is None, create the index without assigning type
+                value_type = type(value)
+                if value_type is NoneType:
+                    self.index_map.update({var_name: Index()})
+                else:
+                    self.index_map.update({var_name: Index(type(value))})
             try:
                 self.index_map[var_name].add(value, index)
             except TypeError:
@@ -55,16 +61,21 @@ class MemoryIndex(IndexManager):
                 if high is not None and not isinstance(high, index.index_type):
                     raise ValueError(f"The high value of \"{key}\" must be of type {index.index_type}")
                 if x == 0:
-                    indexes.update(index.retrieve_range(low, high))
+                    results = index.retrieve_range(low, high)
+                    if results is not None:
+                        indexes.update(results)
                 else:
-                    indexes.intersection_update(index.retrieve_range(low, high))
+                    results = index.retrieve_range(low, high)
+                    if results is not None:
+                        indexes.intersection_update(results)
             else:
                 if value is not None and not isinstance(value, index.index_type):
                     raise ValueError(f"\"{key}\" must be of type {index.index_type}")
                 results = index.retrieve(value)
-                if x == 0:
-                    indexes.update(results)
-                else:
-                    indexes.intersection_update(results)
+                if results is not None:
+                    if x == 0:
+                        indexes.update(results)
+                    else:
+                        indexes.intersection_update(results)
         if len(indexes) > 0:
             return indexes

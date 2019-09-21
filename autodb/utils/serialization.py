@@ -8,14 +8,17 @@ from ..errors import PathError
 
 
 def serialize(item: object) -> bytes:
+    """Serializes the given object using pickle."""
     return pickle.dumps(item, pickle.HIGHEST_PROTOCOL)
 
 
 def deserialize(raw_data: bytes):
+    """Deserializes bytes to object using pickle."""
     return pickle.loads(raw_data)
 
 
 def load_object(path: str) -> object:
+    """Load python object from disk using pickle. Used to load indexes and other attributes."""
     if not os.path.exists(path) or not os.path.isfile(path):
         return
     with open(path, "rb") as file:
@@ -23,6 +26,7 @@ def load_object(path: str) -> object:
 
 
 def dump_object(path: str, item: object) -> None:
+    """Persists object to disk using pickle. Used to save indexes and other attributes."""
     if not os.path.exists(os.path.dirname(path)):
         os.mkdir(os.path.dirname(path))
     with open(path, "wb") as file:

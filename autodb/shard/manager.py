@@ -43,7 +43,6 @@ class ShardManager:
         for shard_index, value in prepped_items.items():
             shard, index = shard_index
             self.buffer[shard][index] = value
-        self.buffer.commit()
 
     def delete(self, indexes: Iterable[int]) -> None:
         """Removes the items with the given indexes."""
@@ -51,6 +50,9 @@ class ShardManager:
         shard_indexes.sort(key=lambda x: x[0])
         for shard, index in shard_indexes:
             self.buffer[shard][index] = None
+
+    def commit(self):
+        """Persists all data to disk."""
         self.buffer.commit()
 
 

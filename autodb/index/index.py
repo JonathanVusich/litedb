@@ -3,15 +3,22 @@ from typing import Union, Optional, Set
 from sortedcontainers import SortedDict
 
 
+NoneType = type(None)
+
+
 class Index:
     """
     This class stores maps valid index values to their corresponding list index.
     """
 
-    def __init__(self, index_type):
+    def __init__(self, index_type=None):
         self.indexes: SortedDict[object, Union[int, Set[int]]] = SortedDict()
         self.none_indexes: Set[int] = set()
-        self.index_type = index_type
+        self._index_type = index_type
+
+    @property
+    def index_type(self):
+        return self._index_type
 
     def __eq__(self, other):
         if isinstance(other, Index):
@@ -24,6 +31,13 @@ class Index:
 
     def add(self, value, index: int) -> None:
         """This method adds an index for a given value."""
+
+        # If the index type is None, check the value for a type and assign the index type to it if it is not None
+        if self._index_type is None:
+            value_type = type(value)
+            if value_type is not NoneType:
+                self._index_type = value_type
+
         if value is None:
             self.none_indexes.add(index)
             return
