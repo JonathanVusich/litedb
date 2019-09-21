@@ -4,7 +4,8 @@ import os
 from pcpartpicker import API
 from random import choice, shuffle
 import pickle
-from autodb import DiskDatabase
+from autodb import DiskDatabase, MemoryDatabase
+from autodb.abc import Database
 
 
 @fixture
@@ -34,19 +35,54 @@ def test_data():
 
 
 @fixture
-def database(tmpdir) -> DiskDatabase:
-    return DiskDatabase(tmpdir.mkdir("database"))
+def database_dir(tmpdir) -> str:
+    return tmpdir.mkdir("database")
 
 
 def format_indexes(indexes: list, item: object) -> dict:
     return dict((((index, getattr(item, index)) for index in indexes)))
 
 
-def test_fuzz(test_data, database: DiskDatabase):
+def test_fuzz_disk(test_data, database_dir: str):
     profiler = cProfile.Profile()
     profiler.enable()
+
+    database = DiskDatabase(database_dir)
+
     for key, parts in test_data.items():
         database.batch_insert(list(parts))
+        database.commit()
+
+    del database
+
+    database = DiskDatabase(database_dir)
+
+    verify_database(test_data, database)
+
+    database.commit()
+
+    del database
+
+    database = DiskDatabase(database_dir)
+
+    assert len(database) == 0
+
+    profiler.disable()
+    profiler.dump_stats("test2.prof")
+
+
+def test_fuzz_memory(test_data):
+    database = MemoryDatabase()
+    for key, parts in test_data.items():
+        for part in parts:
+            database.insert(part)
+
+    verify_database(test_data, database)
+
+    assert len(database) == 0
+    
+
+def verify_database(test_data, database: Database):
     for key, parts in test_data.items():
         parts = list(parts)
         clazz = parts[0].__class__
@@ -62,5 +98,3 @@ def test_fuzz(test_data, database: DiskDatabase):
             database.select(clazz).delete(**indexes)
             assert current_size == len(database.select(clazz)) + 1
             assert not list(database.select(clazz).retrieve(**indexes))
-    profiler.disable()
-    profiler.dump_stats("test2.prof")
