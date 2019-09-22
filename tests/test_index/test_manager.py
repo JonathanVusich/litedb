@@ -1,9 +1,9 @@
 import pytest
 
-from autodb.errors import InvalidRange
-from autodb.index.index import Index
-from autodb.index.persistent_index import PersistentIndex
-from autodb.utils.serialization import dump
+from litedb.errors import InvalidRange
+from litedb.index.index import Index
+from litedb.index.persistent_index import PersistentIndex
+from litedb.utils.serialization import dump_object
 from ..test_table.table_test_objects import StandardTableObject, BadObject
 
 
@@ -33,8 +33,8 @@ def test_prior_index_file_init(table_dir, tmpdir, index):
     index_map = {"test": index}
     index_blacklist = {"_bad"}
     index_dir = tmpdir.mkdir("table", "index")
-    dump(index_dir.join("map"), index_map)
-    dump(index_dir.join("blacklist"), index_blacklist)
+    dump_object(index_dir.join("map"), index_map)
+    dump_object(index_dir.join("blacklist"), index_blacklist)
     manager = PersistentIndex(index_dir)
     assert manager.index_blacklist == {"_bad"}
     assert manager.index_map == {"test": index}
@@ -45,7 +45,7 @@ def test_persist_load(table_dir, tmpdir, index):
     manager = PersistentIndex(index_dir)
     manager.index_blacklist = {"_bad"}
     manager.index_map = {"test": index}
-    manager.persist()
+    manager.commit()
     new_manager = PersistentIndex(index_dir)
     assert new_manager.index_blacklist == {"_bad"}
     assert new_manager.index_map == {"test": index}
@@ -126,7 +126,6 @@ def test_table_retrieve_well_formed_queries(index_manager):
 
 
 def test_table_retrieve_bad_queries(index_manager):
-
     for i in range(10):
         index_manager.index_item(StandardTableObject(i, -i), i)
 
@@ -144,4 +143,3 @@ def test_table_retrieve_bad_queries(index_manager):
 
     with pytest.raises(ValueError):
         index_manager.retrieve(x=(1, b"test"))
-

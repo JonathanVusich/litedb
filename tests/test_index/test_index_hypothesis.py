@@ -1,9 +1,10 @@
+import unittest
+
 import pytest
 from hypothesis import given, settings, assume
 from hypothesis.strategies import text, integers
-import unittest
 
-from autodb.index import Index
+from litedb.index import Index
 
 
 class IndexAddTest(unittest.TestCase):

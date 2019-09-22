@@ -1,6 +1,7 @@
-from autodb.database import DiskDatabase
-from .test_database import SimpleRecord
 import pytest
+
+from litedb.database import DiskDatabase
+from .test_database import SimpleRecord
 
 
 class ComplexRecord:

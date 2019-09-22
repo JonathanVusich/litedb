@@ -3,8 +3,8 @@ import tempfile
 
 import pytest
 
-from autodb.errors import DatabaseNotFound
-from autodb.utils.path import load_tables
+from litedb.errors import DatabaseNotFound
+from litedb.utils.path import load_tables
 
 
 def test_load_database_well_formed():

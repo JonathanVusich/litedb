@@ -1,6 +1,7 @@
 import os
-from autodb.utils.path import is_info, is_index, is_shard, is_table, valid_table_contents
 import tempfile
+
+from litedb.utils.path import is_info, is_index, is_shard, valid_table_contents
 
 
 def test_is_shard():

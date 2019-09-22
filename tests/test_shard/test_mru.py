@@ -1,10 +1,11 @@
-from autodb.shard.queue import ShardLRU
 from collections import deque
+
+from litedb.shard.shardlru import ShardLRU
 
 
 def test_mru_instantiate():
     mru = ShardLRU()
-    assert mru.mru.maxlen == 5
+    assert mru.mru.maxlen == 65
 
 
 def test_mru_add_shards():

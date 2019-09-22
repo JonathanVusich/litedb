@@ -1,4 +1,5 @@
 import os
+
 from setuptools import setup, find_packages
 
 
@@ -7,8 +8,8 @@ def read(file_name: str):
 
 
 setup(
-    name="autodb",
-    version="0.0.0",
+    name="litedb",
+    version="0.1.0",
     author="Jonathan Vusich",
     author_email="jonathanvusich@gmail.com",
     description="A pure Python NoSQL database",
@@ -16,12 +17,12 @@ setup(
     long_description_content_type="text/markdown",
     license="MIT",
     keywords="nosql database python",
-    url="https://github.com/JonathanVusich/autodb",
+    url="https://github.com/JonathanVusich/litedb",
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=read("requirements.txt"),
     classifiers=[
-        "Development Status :: 1 - Development - Unstable",
-        "Topic :: Utilities",
-        "License :: OSI Approved :: MIT",
+        "Development Status :: 4 - Beta",
+        "Topic :: Database",
+        "License :: OSI Approved :: MIT License",
     ],
 )

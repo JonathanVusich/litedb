@@ -1,7 +1,7 @@
 import pytest
 from sortedcontainers import SortedDict
 
-from autodb.index import Index
+from litedb.index import Index
 
 
 def test_index_init():

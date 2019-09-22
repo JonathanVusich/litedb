@@ -1,5 +1,6 @@
 import pytest
-from autodb.database import MemoryDatabase
+
+from litedb.database import MemoryDatabase
 
 
 class SimpleRecord:

@@ -1,7 +1,8 @@
-from autodb.shard.manager import ShardManager
-from sortedcontainers import SortedDict
-from autodb.utils.serialization import serialize, deserialize, dump
 import pytest
+from sortedcontainers import SortedDict
+
+from litedb.shard.manager import ShardManager
+from litedb.utils.serialization import serialize, dump_object
 
 
 @pytest.fixture()
@@ -10,7 +11,7 @@ def shard_manager(tmpdir):
     table_dir = str(temp_directory)
     s = serialize
     shard = [s(item) for item in ([None] * 512)]
-    dump(temp_directory.join("shard0"), shard)
+    dump_object(temp_directory.join("shard0"), shard)
     return ShardManager(table_dir)
 
 
@@ -39,19 +40,17 @@ def odd_vals():
 
 
 def test_insert(shard_manager, small_vals):
-    ds = deserialize
     shard_manager.insert(small_vals)
     for x, value in enumerate(shard_manager.buffer[0]):
-        assert small_vals[x] == ds(value)
+        assert small_vals[x] == value
 
 
 def test_insert_multiple_shards(shard_manager, large_vals):
-    ds = deserialize
     shard_manager.insert(large_vals)
     for x, value in enumerate(shard_manager.buffer[0]):
-        assert large_vals[x] == ds(value)
+        assert large_vals[x] == value
     for x, value in enumerate(shard_manager.buffer[1]):
-        assert large_vals[x + 512] == ds(value)
+        assert large_vals[x + 512] == value
 
 
 def test_retrieve(shard_manager, odd_vals):

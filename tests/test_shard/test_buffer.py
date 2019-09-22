@@ -1,10 +1,10 @@
-import pickle
 from collections import deque
 
 import pytest
 
-from autodb.shard.buffer import ShardBuffer
-from autodb.utils.serialization import dump
+from litedb.shard.buffer import ShardBuffer, SHARD_SIZE
+from litedb.shard.shard import Shard
+from litedb.utils.serialization import dump_shard, load_shard
 
 
 @pytest.fixture()
@@ -12,8 +12,8 @@ def buffer(tmpdir):
     temp_directory = tmpdir.mkdir("table")
     table_dir = str(temp_directory)
     paths = {0: str(temp_directory.join("shard0"))}
-    shard = [None] * 512
-    dump(temp_directory.join("shard0"), shard)
+    shard = Shard()
+    dump_shard(temp_directory.join("shard0"), shard.to_bytes())
     buffer = ShardBuffer(table_dir, paths)
     return buffer
 
@@ -27,7 +27,7 @@ def test_buffer_init(buffer):
     assert buffer.current_shard_index == -1
     assert isinstance(buffer.table_dir, str)
     assert 0 in buffer.shard_paths
-    assert buffer.mru.mru == deque([])
+    assert buffer.lru.mru == deque([])
 
 
 def test_empty_buffer_iter(empty_buffer):
@@ -38,18 +38,24 @@ def test_empty_buffer_iter(empty_buffer):
 def test_buffer_iter(buffer):
     for x, shard in enumerate(buffer):
         assert x < 1
-        assert shard == [None] * 512
+        empty_shard = Shard()
+        assert shard.binary_blobs == empty_shard.binary_blobs
+        assert shard.checksum == empty_shard.checksum
+        assert shard.none_constant == empty_shard.none_constant
 
 
 def test_buffer_get_item(buffer):
+    blank_shard = Shard()
     empty_shard = buffer[0]
     assert len(buffer.shard_paths) == 1
     assert len(buffer.loaded_shards) == 1
-    assert empty_shard == [None] * 512
+    assert empty_shard.binary_blobs == blank_shard.binary_blobs
+    assert empty_shard.checksum == blank_shard.checksum
     second_shard = buffer[1]
     assert len(buffer.shard_paths) == 2
     assert len(buffer.loaded_shards) == 2
-    assert second_shard == [None] * 512
+    assert second_shard.binary_blobs == blank_shard.binary_blobs
+    assert second_shard.checksum == blank_shard.checksum
 
 
 def test_buffer_create_new_path(buffer, tmpdir):
@@ -63,10 +69,8 @@ def test_buffer_ensure_shard_loaded(buffer):
     first_shard = buffer[0]
     first_shard[0] = b"test"
     # fill up the buffer
-    buffer._ensure_shard_loaded(1)
-    buffer._ensure_shard_loaded(2)
-    buffer._ensure_shard_loaded(3)
-    buffer._ensure_shard_loaded(4)
+    for i in range(1, 65):
+        buffer._ensure_shard_loaded(i)
     # shard should be evicted
     assert 0 not in buffer.loaded_shards
     assert 0 in buffer.shard_paths
@@ -80,16 +84,13 @@ def test_buffer_persist_shard(buffer, tmpdir):
     assert 0 in buffer.loaded_shards
     buffer._persist_shard(0)
     shard_dir = buffer.shard_paths[0]
-    with open(shard_dir, "rb") as f:
-        f.read(64)
-        file_shard = pickle.loads(f.read())
-    assert empty_shard == file_shard
+    file_shard = Shard.from_bytes(load_shard(shard_dir), SHARD_SIZE)
+    assert empty_shard.binary_blobs == file_shard.binary_blobs
+    assert empty_shard.checksum == file_shard.checksum
 
     empty_shard[0] = b"test"
     buffer._persist_shard(0)
-    with open(shard_dir, "rb") as f:
-        f.read(64)
-        file_shard = pickle.loads(f.read())
+    file_shard = Shard.from_bytes(load_shard(shard_dir), SHARD_SIZE)
     assert file_shard[0] == b"test"
 
 
@@ -98,9 +99,8 @@ def test_buffer_free_shard(buffer):
     empty_shard[0] = b"test"
     buffer._free_shard(0)
     shard_dir = buffer.shard_paths[0]
-    with open(shard_dir, "rb") as f:
-        f.read(64)
-        file_shard = pickle.loads(f.read())
-    assert file_shard == empty_shard
+    file_shard = Shard.from_bytes(load_shard(shard_dir), SHARD_SIZE)
+    assert file_shard.checksum == empty_shard.checksum
+    assert file_shard.binary_blobs == empty_shard.binary_blobs
     assert 0 not in buffer.loaded_shards
     assert len(buffer.loaded_shards) == 0

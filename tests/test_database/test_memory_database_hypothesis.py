@@ -1,9 +1,11 @@
-import pytest
-from autodb.database import MemoryDatabase
-from ..test_table.table_test_objects import BadAndGoodObject, GoodObject, BadObject, GoodIndex
-from hypothesis.strategies import integers
-from hypothesis import given
 import unittest
+
+import pytest
+from hypothesis import given
+from hypothesis.strategies import integers
+
+from litedb.database import MemoryDatabase
+from ..test_table.table_test_objects import BadAndGoodObject, GoodObject, BadObject, GoodIndex
 
 
 class TestMemoryDatabase(unittest.TestCase):
@@ -22,9 +24,9 @@ class TestMemoryDatabase(unittest.TestCase):
         self.database.insert(GoodObject(value))
         self.database.insert(BadObject(value))
         self.length += 1
-        assert len(self.database.tables[BadAndGoodObject]) == self.length
-        assert len(self.database.tables[GoodObject]) == self.length
-        assert len(self.database.tables[BadObject]) == self.length
+        assert len(self.database._tables[BadAndGoodObject]) == self.length
+        assert len(self.database._tables[GoodObject]) == self.length
+        assert len(self.database._tables[BadObject]) == self.length
         assert len(self.database) == self.length * 3
 
     @given(
