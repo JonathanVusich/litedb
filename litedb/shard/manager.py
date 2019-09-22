@@ -4,16 +4,16 @@ from sortedcontainers import SortedDict
 
 from .buffer import ShardBuffer
 from ..utils.path import get_shard_file_paths
-
-SHARD_SIZE = 512
+from ..database.config import Config
 
 
 class ShardManager:
     """This class handles the high-level shard operations by manipulating the shard buffer."""
 
-    def __init__(self, table_dir: str) -> None:
+    def __init__(self, table_dir: str, config: Config) -> None:
         shard_paths = get_shard_file_paths(table_dir)
-        self.buffer = ShardBuffer(table_dir, shard_paths)
+        self.buffer = ShardBuffer(table_dir, shard_paths, config)
+        self.config = config
 
     def retrieve(self, indexes: Iterable[int]) -> Generator[object, None, None]:
         """
@@ -21,7 +21,7 @@ class ShardManager:
         :param indexes:
         :return:
         """
-        shard_indexes = [calculate_shard_number(index) for index in indexes]
+        shard_indexes = [self.calculate_shard_number(index) for index in indexes]
         shard_indexes.sort(key=lambda x: x[0])
         for shard, index in shard_indexes:
             yield self.buffer[shard][index]
@@ -39,14 +39,14 @@ class ShardManager:
         """Inserts and persists the given collection of items."""
         prepped_items = SortedDict()
         for key, value in items.items():
-            prepped_items[calculate_shard_number(key)] = value
+            prepped_items[self.calculate_shard_number(key)] = value
         for shard_index, value in prepped_items.items():
             shard, index = shard_index
             self.buffer[shard][index] = value
 
     def delete(self, indexes: Iterable[int]) -> None:
         """Removes the items with the given indexes."""
-        shard_indexes = [calculate_shard_number(index) for index in indexes]
+        shard_indexes = [self.calculate_shard_number(index) for index in indexes]
         shard_indexes.sort(key=lambda x: x[0])
         for shard, index in shard_indexes:
             self.buffer[shard][index] = None
@@ -55,7 +55,6 @@ class ShardManager:
         """Persists all data to disk."""
         self.buffer.commit()
 
-
-def calculate_shard_number(index: int) -> Tuple[int, int]:
-    """Calculates the shard index and the item index within a shard."""
-    return index // SHARD_SIZE, index % SHARD_SIZE
+    def calculate_shard_number(self, index: int) -> Tuple[int, int]:
+        """Calculates the shard index and the item index within a shard."""
+        return index // self.config.page_size, index % self.config.page_size

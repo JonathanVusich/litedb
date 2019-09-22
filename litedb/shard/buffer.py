@@ -4,8 +4,7 @@ from typing import Dict
 from .shard import Shard
 from .shardlru import ShardLRU
 from ..utils.serialization import load_shard, dump_shard, get_checksum
-
-SHARD_SIZE = 512
+from ..database.config import Config
 
 
 class ShardBuffer:
@@ -14,12 +13,13 @@ class ShardBuffer:
     Also allows iteration for easy object collection.
     """
 
-    def __init__(self, table_dir: str, shard_paths: Dict[int, str]) -> None:
+    def  __init__(self, table_dir: str, shard_paths: Dict[int, str], config: Config) -> None:
         self.table_dir = table_dir
         self.loaded_shards: Dict[int, Shard] = {}
         self.shard_paths = shard_paths
         self.current_shard_index: int = -1
-        self.lru = ShardLRU()
+        self.lru = ShardLRU(max_len=config.page_cache)
+        self.config = config
 
     def __iter__(self):
         self.current_shard_index = -1
@@ -54,7 +54,7 @@ class ShardBuffer:
         if shard_index not in self.loaded_shards:
             if shard_index in self.shard_paths:
                 self.loaded_shards.update(
-                    {shard_index: Shard.from_bytes(load_shard(self.shard_paths[shard_index]), SHARD_SIZE)})
+                    {shard_index: Shard.from_bytes(load_shard(self.shard_paths[shard_index]), self.config.page_size)})
             else:
                 self.loaded_shards.update({shard_index: Shard()})
                 self.shard_paths.update({shard_index: self._create_new_shard_path()})

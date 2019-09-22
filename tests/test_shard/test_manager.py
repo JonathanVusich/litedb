@@ -1,6 +1,7 @@
 import pytest
 from sortedcontainers import SortedDict
 
+from litedb import Config
 from litedb.shard.manager import ShardManager
 from litedb.utils.serialization import serialize, dump_object
 
@@ -12,7 +13,7 @@ def shard_manager(tmpdir):
     s = serialize
     shard = [s(item) for item in ([None] * 512)]
     dump_object(temp_directory.join("shard0"), shard)
-    return ShardManager(table_dir)
+    return ShardManager(table_dir, Config())
 
 
 @pytest.fixture(scope='module')
