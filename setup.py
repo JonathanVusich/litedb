@@ -9,7 +9,7 @@ def read(file_name: str):
 
 setup(
     name="litedb",
-    version="0.1.0",
+    version="0.1.1",
     author="Jonathan Vusich",
     author_email="jonathanvusich@gmail.com",
     description="A pure Python NoSQL database",
