@@ -2,9 +2,10 @@ from collections import deque
 
 import pytest
 
-from litedb.shard.buffer import ShardBuffer, SHARD_SIZE
+from litedb.shard.buffer import ShardBuffer
 from litedb.shard.shard import Shard
 from litedb.utils.serialization import dump_shard, load_shard
+from litedb import Config
 
 
 @pytest.fixture()
@@ -14,13 +15,13 @@ def buffer(tmpdir):
     paths = {0: str(temp_directory.join("shard0"))}
     shard = Shard()
     dump_shard(temp_directory.join("shard0"), shard.to_bytes())
-    buffer = ShardBuffer(table_dir, paths)
+    buffer = ShardBuffer(table_dir, paths, Config())
     return buffer
 
 
 @pytest.fixture()
 def empty_buffer():
-    return ShardBuffer("tabledir", {})
+    return ShardBuffer("tabledir", {}, Config())
 
 
 def test_buffer_init(buffer):
@@ -66,10 +67,11 @@ def test_buffer_create_new_path(buffer, tmpdir):
 
 
 def test_buffer_ensure_shard_loaded(buffer):
+    default_config = Config()
     first_shard = buffer[0]
     first_shard[0] = b"test"
     # fill up the buffer
-    for i in range(1, 65):
+    for i in range(1, default_config.page_cache + 1):
         buffer._ensure_shard_loaded(i)
     # shard should be evicted
     assert 0 not in buffer.loaded_shards
@@ -84,13 +86,13 @@ def test_buffer_persist_shard(buffer, tmpdir):
     assert 0 in buffer.loaded_shards
     buffer._persist_shard(0)
     shard_dir = buffer.shard_paths[0]
-    file_shard = Shard.from_bytes(load_shard(shard_dir), SHARD_SIZE)
+    file_shard = Shard.from_bytes(load_shard(shard_dir), 512)
     assert empty_shard.binary_blobs == file_shard.binary_blobs
     assert empty_shard.checksum == file_shard.checksum
 
     empty_shard[0] = b"test"
     buffer._persist_shard(0)
-    file_shard = Shard.from_bytes(load_shard(shard_dir), SHARD_SIZE)
+    file_shard = Shard.from_bytes(load_shard(shard_dir), 512)
     assert file_shard[0] == b"test"
 
 
@@ -99,7 +101,7 @@ def test_buffer_free_shard(buffer):
     empty_shard[0] = b"test"
     buffer._free_shard(0)
     shard_dir = buffer.shard_paths[0]
-    file_shard = Shard.from_bytes(load_shard(shard_dir), SHARD_SIZE)
+    file_shard = Shard.from_bytes(load_shard(shard_dir), 512)
     assert file_shard.checksum == empty_shard.checksum
     assert file_shard.binary_blobs == empty_shard.binary_blobs
     assert 0 not in buffer.loaded_shards

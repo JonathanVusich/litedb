@@ -2,6 +2,7 @@ import os
 from typing import Dict, ValuesView
 
 from litedb.abc.database import Database
+from ..database.config import Config
 from ..errors import DatabaseNotFound
 from ..table import PersistentTable
 from ..utils.path import load_tables
@@ -10,16 +11,17 @@ from ..utils.path import load_tables
 class DiskDatabase(Database):
     """Persistent implementation of the AutoDB interface."""
 
-    def __init__(self, directory: str):
+    def __init__(self, directory: str, config: Config = Config()):
         self._tables: Dict[object, PersistentTable] = {}
         self.directory = directory
+        self._config = config
         if not os.path.exists(directory):
             os.mkdir(directory)
         if os.path.exists(directory):
             try:
                 for table in load_tables(directory):
                     table = PersistentTable._from_file(table)
-                    self._tables.update({table.table_type: table})
+                    self._tables.update({table._table_type: table})
             except DatabaseNotFound:
                 pass
 
@@ -47,7 +49,7 @@ class DiskDatabase(Database):
             self._tables[class_name]._insert(item)
         except KeyError:
             self._tables.update(
-                {class_name: PersistentTable._new(os.path.join(self.directory, hex(abs(hash(class_name)))),
+                {class_name: PersistentTable._new(self._config, os.path.join(self.directory, hex(abs(hash(class_name)))),
                                                   table_type=class_name)})
             self._tables[class_name]._insert(item)
 
@@ -61,7 +63,7 @@ class DiskDatabase(Database):
                 self._tables[first_item_type]._batch_insert(items)
             except KeyError:
                 self._tables.update(
-                    {first_item_type: PersistentTable._new(os.path.join(self.directory, first_item_type.__name__),
+                    {first_item_type: PersistentTable._new(self._config, os.path.join(self.directory, first_item_type.__name__),
                                                            table_type=first_item_type)})
                 self._tables[first_item_type]._batch_insert(items)
 
