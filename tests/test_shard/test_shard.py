@@ -1,4 +1,4 @@
-from pydb.shard.shard import Shard
+from litedb.shard.shard import Shard
 
 
 def test_basic_init():

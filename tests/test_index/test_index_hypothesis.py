@@ -4,7 +4,7 @@ import pytest
 from hypothesis import given, settings, assume
 from hypothesis.strategies import text, integers
 
-from pydb.index import Index
+from litedb.index import Index
 
 
 class IndexAddTest(unittest.TestCase):

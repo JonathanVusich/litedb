@@ -1,7 +1,7 @@
 import os
 from typing import Dict, ValuesView
 
-from pydb.abc.database import Database
+from litedb.abc.database import Database
 from ..errors import DatabaseNotFound
 from ..table import PersistentTable
 from ..utils.path import load_tables

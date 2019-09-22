@@ -1,6 +1,6 @@
 from collections import deque
 
-from pydb.shard.shardlru import ShardLRU
+from litedb.shard.shardlru import ShardLRU
 
 
 def test_mru_instantiate():

@@ -1,7 +1,7 @@
 import pickle
 from typing import List, Optional, Generator, Set
 
-from pydb.abc.table import Table
+from litedb.abc.table import Table
 from ..index.memory_index import MemoryIndex
 
 

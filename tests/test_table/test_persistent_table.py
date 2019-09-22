@@ -1,7 +1,7 @@
 import pytest
 from sortedcontainers import SortedList
 
-from pydb.table.persistent_table import PersistentTable
+from litedb.table.persistent_table import PersistentTable
 from tests.test_table.table_test_objects import GoodObject, GoodIndex
 
 

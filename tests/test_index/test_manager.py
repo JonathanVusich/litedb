@@ -1,9 +1,9 @@
 import pytest
 
-from pydb.errors import InvalidRange
-from pydb.index.index import Index
-from pydb.index.persistent_index import PersistentIndex
-from pydb.utils.serialization import dump_object
+from litedb.errors import InvalidRange
+from litedb.index.index import Index
+from litedb.index.persistent_index import PersistentIndex
+from litedb.utils.serialization import dump_object
 from ..test_table.table_test_objects import StandardTableObject, BadObject
 
 

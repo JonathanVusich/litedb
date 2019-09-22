@@ -1,6 +1,6 @@
 import pytest
 
-from pydb.database import DiskDatabase
+from litedb.database import DiskDatabase
 from .test_database import SimpleRecord
 
 

@@ -3,8 +3,8 @@ from random import shuffle
 
 from pytest import fixture
 
-from pydb import DiskDatabase, MemoryDatabase
-from pydb.abc import Database
+from litedb import DiskDatabase, MemoryDatabase
+from litedb.abc import Database
 
 
 @fixture

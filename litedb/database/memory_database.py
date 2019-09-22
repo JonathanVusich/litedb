@@ -1,7 +1,7 @@
 from typing import Dict, ValuesView
 
-from pydb.abc.database import Database
-from pydb.abc.table import Table
+from litedb.abc.database import Database
+from litedb.abc.table import Table
 from ..table import MemoryTable
 
 

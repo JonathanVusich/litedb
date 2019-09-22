@@ -2,9 +2,9 @@ from collections import deque
 
 import pytest
 
-from pydb.shard.buffer import ShardBuffer, SHARD_SIZE
-from pydb.shard.shard import Shard
-from pydb.utils.serialization import dump_shard, load_shard
+from litedb.shard.buffer import ShardBuffer, SHARD_SIZE
+from litedb.shard.shard import Shard
+from litedb.utils.serialization import dump_shard, load_shard
 
 
 @pytest.fixture()

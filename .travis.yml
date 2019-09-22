@@ -6,7 +6,7 @@ before_install:
     - python setup.py install
     - pip install -r requirements-dev.txt
 script:
-    - pytest --cov pydb
+    - pytest --cov litedb
 after_success:
     - coveralls
 notifications:
