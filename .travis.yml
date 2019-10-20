@@ -2,9 +2,31 @@ language: python
 python: 3.7
 dist: xenial
 sudo: true
-before_install:
-    - python setup.py install
-    - pip install -r requirements-dev.txt
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      python: 3.7
+      sudo: true
+      before_install:
+        - pip install -r requirements-dev.txt
+        - python setup.py install
+    - os: windows
+      language: sh
+      python: "3.7"
+      env: export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
+      before_install:
+        - choco install python3
+        - pip install -r requirements-dev.txt
+        - python setup.py install
+    - os: osx
+      osx_image: xcode10.2
+      language: shell
+      before_install:
+        - pip3 install -r requirements-dev.txt
+        - python3 setup.py install
+      script:
+        - python3 -m pytest --cov litedb
 script:
     - pytest --cov litedb
 after_success:
