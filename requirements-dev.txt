@@ -1,3 +1,4 @@
+attrs
 pytest
 coverage
 pytest-cov
