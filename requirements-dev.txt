@@ -1,4 +1,4 @@
-attrs
+attrs==19.3.0
 pytest
 coverage
 pytest-cov
