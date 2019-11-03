@@ -1,5 +1,5 @@
 # liteDB
-[![Build Status](https://travis-ci.com/JonathanVusich/autodb.svg?branch=master)](https://travis-ci.com/JonathanVusich/autodb)
+[![Build Status](https://travis-ci.com/JonathanVusich/litedb.svg?branch=master)](https://travis-ci.com/JonathanVusich/litedb)
 [![Coverage Status](https://coveralls.io/repos/github/JonathanVusich/autodb/badge.svg?branch=master&kill_cache=1)](https://coveralls.io/github/JonathanVusich/autodb?branch=master&kill_cache=1)
 
 liteDB is a pure Python NoSQL database that was created to make databases easy. It is designed with clean and simple APIs, and comes in a variety of implementations for specific use cases.
