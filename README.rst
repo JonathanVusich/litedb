@@ -8,7 +8,11 @@ liteDB
 .. image:: https://coveralls.io/repos/github/JonathanVusich/litedb/badge.svg?branch=master
    :target: https://coveralls.io/github/JonathanVusich/litedb?branch=master
    :alt: Coverage
-
+   
+.. image:: https://readthedocs.org/projects/litedb/badge/?version=latest
+   :target: https://litedb.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+   
 liteDB is a Python NoSQL database that was created to make databases easy. It is designed with clean and simple APIs, and comes in a couple of different implementations for specific use cases.
 
 When should I use liteDB?
