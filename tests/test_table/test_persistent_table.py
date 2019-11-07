@@ -29,7 +29,7 @@ def test_new_table(table_dir):
     assert table._shard_manager is not None
     assert table._index_manager is not None
     assert table._table_type == GoodObject
-    assert table.size == 0
+    assert len(table) == 0
     assert table._unused_indexes == SortedList()
 
 
@@ -43,37 +43,34 @@ def test_insert(table, table_dir):
     table = PersistentTable._from_file(table_dir)
     assert table._table_type == GoodObject
     assert table._unused_indexes == SortedList()
-    assert table.size == 2
-
-
-def test_batch_insert(table, table_dir):
-    objects_to_insert = [GoodObject(12), GoodObject(13)]
-    table._batch_insert(objects_to_insert)
-    assert table.size == 2
-    assert table._unused_indexes == SortedList()
+    assert len(table) == 2
 
 
 def test_delete_all(table, test_objects):
-    table._batch_insert(test_objects)
+    for item in test_objects:
+        table._insert(item)
     table.clear()
-    assert table.size == 0
+    assert len(table) == 0
     assert table._unused_indexes == []
-    assert list(table.retrieve_all()) == []
+    assert list(table) == []
 
 
 def test_delete_some(table, test_objects):
-    table._batch_insert(test_objects)
+    for item in test_objects:
+        table._insert(item)
     table.delete(good_index=(GoodIndex(0), GoodIndex(499)))
-    assert table.size == 500
+    assert len(table) == 500
     assert table._unused_indexes == [x for x in range(500)]
-    assert list(table.retrieve_all()) == test_objects[500:]
+    assert list(table) == test_objects[500:]
 
 
 def test_retrieve_all(table, test_objects):
-    table._batch_insert(test_objects)
-    assert list(table.retrieve_all()) == test_objects
+    for item in test_objects:
+        table._insert(item)
+    assert list(table) == test_objects
 
 
 def test_retrieve_some(table, test_objects):
-    table._batch_insert(test_objects)
+    for item in test_objects:
+        table._insert(item)
     assert list(table.retrieve(good_index=(GoodIndex(0), GoodIndex(10)))) == test_objects[:11]
