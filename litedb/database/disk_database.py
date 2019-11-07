@@ -18,6 +18,8 @@ class DiskDatabase(Database):
         if not os.path.exists(directory):
             os.mkdir(directory)
         if os.path.exists(directory):
+            if not os.path.isdir(directory):
+                raise IOError("liteDB instances can only be created in a folder!")
             try:
                 for table in load_tables(directory):
                     table = PersistentTable._from_file(table)
@@ -41,31 +43,28 @@ class DiskDatabase(Database):
         """Returns a view of all of the tables present in this database."""
         return self._tables.values()
 
+    @property
+    def modified(self):
+        """Returns True if there are unsaved changes in this database."""
+        return all(table.modified for table in self._tables.values())
+
     def insert(self, item: object) -> None:
         """Inserts an arbitrary Python class into the database. Do not use this
         database to store raw types."""
+
+        if isinstance(item, (dict, tuple, set, list, bytes, bytearray, str, int, bool, float, complex,
+                             memoryview, frozenset, range)):
+            raise TypeError
+
         class_name = type(item)
         try:
             self._tables[class_name]._insert(item)
         except KeyError:
             self._tables.update(
-                {class_name: PersistentTable._new(self._config, os.path.join(self.directory, hex(abs(hash(class_name)))),
+                {class_name: PersistentTable._new(self._config,
+                                                  os.path.join(self.directory, hex(abs(hash(class_name)))),
                                                   table_type=class_name)})
             self._tables[class_name]._insert(item)
-
-    def batch_insert(self, items: list) -> None:
-        """Inserts a list of similar Python class into the database."""
-        if len(items) == 0:
-            return
-        else:
-            first_item_type = type(items[0])
-            try:
-                self._tables[first_item_type]._batch_insert(items)
-            except KeyError:
-                self._tables.update(
-                    {first_item_type: PersistentTable._new(self._config, os.path.join(self.directory, first_item_type.__name__),
-                                                           table_type=first_item_type)})
-                self._tables[first_item_type]._batch_insert(items)
 
     def select(self, cls):
         """Retrieves the table that contains classes of the given type."""

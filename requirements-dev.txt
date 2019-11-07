@@ -5,3 +5,5 @@ pytest-cov
 hypothesis
 coveralls
 pcpartpicker==2.1.1
+sphinx
+sphinx-rtd-theme

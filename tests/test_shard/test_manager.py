@@ -18,56 +18,61 @@ def shard_manager(tmpdir):
 
 @pytest.fixture(scope='module')
 def small_vals():
-    vals = SortedDict()
-    for x in range(512):
-        vals[x] = x
-    return vals
+    vals = (x for x in range(512))
+    items = (x for x in range(512))
+    indexed_items = [(index, item) for index, item in zip(vals, items)]
+    return indexed_items
 
 
 @pytest.fixture(scope='module')
 def large_vals():
-    vals = SortedDict()
-    for x in range(1024):
-        vals[x] = x
-    return vals
+    vals = (x for x in range(1024))
+    items = (x for x in range(1024))
+    indexed_items = [(index, item) for index, item in zip(vals, items)]
+    return indexed_items
 
 
 @pytest.fixture(scope='module')
 def odd_vals():
-    vals = SortedDict()
-    for x in filter(lambda x: x % 2 == 0, range(1024)):
-        vals[x] = x
-    return vals
+    vals = (x for x in range(1024) if x % 2 == 0)
+    items = (x for x in range(1024) if x % 2 == 0)
+    indexed_items = [(index, item) for index, item in zip(vals, items)]
+    return indexed_items
 
 
 def test_insert(shard_manager, small_vals):
-    shard_manager.insert(small_vals)
+    for index, item in small_vals:
+        shard_manager.insert(item, index)
     for x, value in enumerate(shard_manager.buffer[0]):
-        assert small_vals[x] == value
+        assert x == value
 
 
 def test_insert_multiple_shards(shard_manager, large_vals):
-    shard_manager.insert(large_vals)
+    for index, item in large_vals:
+        shard_manager.insert(item, index)
     for x, value in enumerate(shard_manager.buffer[0]):
-        assert large_vals[x] == value
+        assert x == value
     for x, value in enumerate(shard_manager.buffer[1]):
-        assert large_vals[x + 512] == value
+        assert x + 512 == value
 
 
 def test_retrieve(shard_manager, odd_vals):
-    shard_manager.insert(odd_vals)
+    for index, item in odd_vals:
+        shard_manager.insert(item, index)
     indexes = list(filter(lambda x: x % 2 == 0, range(1024)))
     values = list(shard_manager.retrieve(indexes))
     assert values == indexes
 
 
 def test_delete(shard_manager, large_vals):
-    shard_manager.insert(large_vals)
+    for index, item in large_vals:
+        shard_manager.insert(item, index)
     shard_manager.delete(range(1024))
     assert list(shard_manager.retrieve_all()) == []
 
 
 def test_retrieve_all(shard_manager, large_vals):
-    shard_manager.insert(large_vals)
+    for index, item in large_vals:
+        shard_manager.insert(item, index)
     for x, value in enumerate(shard_manager.retrieve_all()):
-        assert large_vals[x] == value
+        assert x == value

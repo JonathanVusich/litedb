@@ -13,7 +13,7 @@ setup(
     author="Jonathan Vusich",
     author_email="jonathanvusich@gmail.com",
     description="A pure Python NoSQL database",
-    long_description=read("README.md"),
+    long_description=read("README.rst"),
     long_description_content_type="text/markdown",
     license="MIT",
     keywords="nosql database python",

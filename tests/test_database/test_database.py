@@ -38,6 +38,37 @@ def test_insert(database):
     assert len(database) == 2
 
 
+def test_inserting_bad_objects(database):
+    with pytest.raises(TypeError):
+        database.insert(list())
+    with pytest.raises(TypeError):
+        database.insert(set())
+    with pytest.raises(TypeError):
+        database.insert(dict())
+    with pytest.raises(TypeError):
+        database.insert(frozenset())
+    with pytest.raises(TypeError):
+        database.insert("HI")
+    with pytest.raises(TypeError):
+        database.insert(True)
+    with pytest.raises(TypeError):
+        database.insert(123)
+    with pytest.raises(TypeError):
+        database.insert(123.12)
+    with pytest.raises(TypeError):
+        database.insert(tuple())
+    with pytest.raises(TypeError):
+        database.insert(bytes("HI"))
+    with pytest.raises(TypeError):
+        database.insert(complex(2, 4))
+    with pytest.raises(TypeError):
+        database.insert(bytearray("1234"))
+    with pytest.raises(TypeError):
+        database.insert(frozenset())
+    with pytest.raises(TypeError):
+        database.insert(range(3))
+
+
 def test_retrieve_valid(database, test_objects):
     for item in test_objects:
         database.insert(item)

@@ -35,14 +35,10 @@ class ShardManager:
             for byte in filter(lambda x: x is not None, shard):
                 yield byte
 
-    def insert(self, items: SortedDict) -> None:
+    def insert(self, item: object, index: int) -> None:
         """Inserts and persists the given collection of items."""
-        prepped_items = SortedDict()
-        for key, value in items.items():
-            prepped_items[self.calculate_shard_number(key)] = value
-        for shard_index, value in prepped_items.items():
-            shard, index = shard_index
-            self.buffer[shard][index] = value
+        shard, index = self.calculate_shard_number(index)
+        self.buffer[shard][index] = item
 
     def delete(self, indexes: Iterable[int]) -> None:
         """Removes the items with the given indexes."""

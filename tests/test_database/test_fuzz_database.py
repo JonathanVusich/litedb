@@ -26,7 +26,8 @@ def test_fuzz_disk(test_data, database_dir: str):
     database = DiskDatabase(database_dir)
 
     for key, parts in test_data.items():
-        database.batch_insert(list(parts))
+        for part in parts:
+            database.insert(part)
         database.commit()
 
     del database
