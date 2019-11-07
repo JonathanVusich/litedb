@@ -21,7 +21,7 @@ class Database(ABC):
     @abstractmethod
     def __iter__(self):
         """
-        Should allow iteration of the tables contained
+        Should allow iteration of the class types contained
         within this database.
         :return:
         """
