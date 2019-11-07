@@ -31,6 +31,11 @@ class MemoryDatabase(Database):
     def insert(self, complex_object: object):
         """Inserts an arbitrary Python class into the database. Do not use this
         database to store raw types."""
+
+        if isinstance(complex_object, (dict, tuple, set, list, bytes, bytearray, str, int, bool, float, complex,
+                                       memoryview, frozenset, range)):
+            raise TypeError
+
         class_type = type(complex_object)
         if class_type not in self._tables:
             self._tables.update({class_type: MemoryTable()})
