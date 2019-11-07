@@ -26,6 +26,10 @@ class MemoryTable(Table):
         """Returns the number of items stored in this table."""
         return self.size
 
+    def __iter__(self):
+        """Returns a generator of all items in the table."""
+        return (pickle.loads(item) for index, item in enumerate(self.pickle_table) if index not in self.unused_indexes)
+
     def _insert(self, item: object) -> None:
         """Internal method that inserts an item into the pickle table."""
         byte_repr = pickle.dumps(item, protocol=pickle.HIGHEST_PROTOCOL)
@@ -50,10 +54,6 @@ class MemoryTable(Table):
         else:
             # noinspection PyRedundantParentheses
             return ([])  # Disabling this inspection because we need to return a generator
-
-    def retrieve_all(self) -> [Generator[object, None, None]]:
-        """Retrieves all items in this table."""
-        return (pickle.loads(item) for index, item in enumerate(self.pickle_table) if index not in self.unused_indexes)
 
     @property
     def indexes(self) -> List[str]:

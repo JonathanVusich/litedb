@@ -1,12 +1,12 @@
 import os
 from typing import List, Generator, Union, Set
 
-from sortedcontainers import SortedList, SortedDict
+from sortedcontainers import SortedList
 
 from litedb.abc.table import Table
+from ..database.config import Config
 from ..index import PersistentIndex
 from ..shard import ShardManager
-from ..database.config import Config
 from ..utils.io import empty_directory
 from ..utils.path import create_info_path, create_index_path
 from ..utils.serialization import load_object, dump_object
@@ -42,7 +42,8 @@ class PersistentTable(Table):
             self._config = config
         else:
             self._table_type = load_object(os.path.join(self._info_path, "table_type"))
-            self._size = load_object(os.path.join(self._info_path, "size"))
+            # noinspection PyTypeChecker
+            self._size: int = load_object(os.path.join(self._info_path, "size"))
             # noinspection PyTypeChecker
             self._unused_indexes: SortedList = load_object(os.path.join(self._info_path, "unused_indexes"))
             # noinspection PyTypeChecker
@@ -58,6 +59,9 @@ class PersistentTable(Table):
     def __len__(self):
         return self._size
 
+    def __iter__(self):
+        return self._shard_manager.retrieve_all()
+
     @classmethod
     def _from_file(cls, directory: str):
         """Internal method to load a table from disk."""
@@ -67,62 +71,6 @@ class PersistentTable(Table):
     def _new(cls, config: Config, directory: str, table_type):
         """Creates a new table with the given directory as the persistence location."""
         return cls(config=config, directory=directory, table_type=table_type)
-
-    def commit(self) -> None:
-        """Commits any changes made to this table to disk."""
-        if self._modified:
-            dump_object(os.path.join(self._info_path, "table_type"), self._table_type)
-            dump_object(os.path.join(self._info_path, "size"), self._size)
-            dump_object(os.path.join(self._info_path, "unused_indexes"), self._unused_indexes)
-            dump_object(os.path.join(self._info_path, "config"), self._config)
-            self._index_manager.commit()
-            self._shard_manager.commit()
-            self._modified = False
-
-    def _insert(self, item: object) -> None:
-        """Internal method that indexes and stores an object."""
-        if len(self._unused_indexes) > 0:
-            index = self._unused_indexes.pop()
-        else:
-            index = self._size
-            item_dict = SortedDict()
-            item_dict[index] = item
-            self._shard_manager.insert(item_dict)
-        self._size += 1
-        self._index_manager.index_item(item, index)
-        self._modified = True
-
-    def _batch_insert(self, item_list: List[object]) -> None:
-        """Internal method that indexes and stores a list of objects."""
-        first_item_type = type(item_list[0])
-        item_dict = SortedDict()
-        for item in item_list:
-            if type(item) != first_item_type:
-                raise ValueError("Batch insert requires all elements to be of the same type!")
-            if len(self._unused_indexes) > 0:
-                index = self._unused_indexes.pop()
-            else:
-                index = self._size
-            self._size += 1
-            item_dict[index] = item
-        self._shard_manager.insert(item_dict)
-        for index, item in item_dict.items():
-            self._index_manager.index_item(item, index)
-        self._modified = True
-
-    def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
-        """Retrieves items in this table based on the given argument descriptors."""
-        if len(kwargs) == 0:
-            raise ValueError
-        indexes = self._index_manager.retrieve(**kwargs)
-        if indexes:
-            return self._shard_manager.retrieve(indexes)
-        else:
-            return ([])
-
-    def retrieve_all(self) -> [Generator[object, None, None]]:
-        """Retrieves all items in this table."""
-        return self._shard_manager.retrieve_all()
 
     @property
     def indexes(self) -> List[str]:
@@ -134,10 +82,15 @@ class PersistentTable(Table):
         """Indicates whether this table has unsaved changes."""
         return self._modified
 
-    @property
-    def size(self):
-        """Return the number of items in this table."""
-        return self._size
+    def retrieve(self, **kwargs) -> [Generator[object, None, None]]:
+        """Retrieves items in this table based on the given argument descriptors."""
+        if len(kwargs) == 0:
+            raise ValueError
+        indexes = self._index_manager.retrieve(**kwargs)
+        if indexes:
+            return self._shard_manager.retrieve(indexes)
+        else:
+            return ([])
 
     def delete(self, **kwargs):
         """Removes items from this table based on the given descriptors."""
@@ -147,6 +100,25 @@ class PersistentTable(Table):
         if indexes_to_delete:
             self._modified = True
             self._delete_indexes(indexes_to_delete)
+
+    def clear(self):
+        """Removes any stored data relating to this table and clears out all items from this table."""
+        empty_directory(self._directory)
+        self._shard_manager = ShardManager(self._directory, self._config)
+        self._index_manager = PersistentIndex(self._index_path)
+        self._size = 0
+        self._unused_indexes: SortedList = SortedList()
+
+    def commit(self) -> None:
+        """Commits any changes made to this table to disk."""
+        if self._modified:
+            dump_object(os.path.join(self._info_path, "table_type"), self._table_type)
+            dump_object(os.path.join(self._info_path, "size"), self._size)
+            dump_object(os.path.join(self._info_path, "unused_indexes"), self._unused_indexes)
+            dump_object(os.path.join(self._info_path, "config"), self._config)
+            self._index_manager.commit()
+            self._shard_manager.commit()
+            self._modified = False
 
     def _delete_indexes(self, indexes: Union[Set[int], List[int]]) -> None:
         """Internal method to actually perform deletion."""
@@ -160,10 +132,13 @@ class PersistentTable(Table):
             self._unused_indexes.update(indexes_to_delete)
             self._shard_manager.delete(indexes_to_delete)
 
-    def clear(self):
-        """Removes any stored data relating to this table and clears out all items from this table."""
-        empty_directory(self._directory)
-        self._shard_manager = ShardManager(self._directory, self._config)
-        self._index_manager = PersistentIndex(self._index_path)
-        self._size = 0
-        self._unused_indexes: SortedList = SortedList()
+    def _insert(self, item: object) -> None:
+        """Internal method that indexes and stores an object."""
+        if len(self._unused_indexes) > 0:
+            index = self._unused_indexes.pop()
+        else:
+            index = self._size
+            self._shard_manager.insert(item, index)
+        self._size += 1
+        self._index_manager.index_item(item, index)
+        self._modified = True
