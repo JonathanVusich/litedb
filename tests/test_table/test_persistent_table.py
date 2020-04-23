@@ -74,3 +74,15 @@ def test_retrieve_some(table, test_objects):
     for item in test_objects:
         table._insert(item)
     assert list(table.retrieve(good_index=(GoodIndex(0), GoodIndex(10)))) == test_objects[:11]
+
+
+def test_table_unused_indexes(table, test_objects, table_dir):
+    for item in test_objects:
+        table._insert(item)
+    table.delete(good_index=GoodIndex(1))
+    table._insert(GoodObject(1))
+    table.commit()
+    del table
+    table = PersistentTable._from_file(table_dir)
+    assert list(table.retrieve(good_index=(GoodIndex(0), GoodIndex(10)))) == test_objects[:11]
+

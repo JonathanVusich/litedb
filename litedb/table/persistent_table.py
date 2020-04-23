@@ -138,7 +138,7 @@ class PersistentTable(Table):
             index = self._unused_indexes.pop()
         else:
             index = self._size
-            self._shard_manager.insert(item, index)
+        self._shard_manager.insert(item, index)
         self._size += 1
         self._index_manager.index_item(item, index)
         self._modified = True
