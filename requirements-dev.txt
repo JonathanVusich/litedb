@@ -1,9 +1,9 @@
 attrs==19.3.0
-pytest
-coverage
-pytest-cov
-hypothesis
-coveralls
-pcpartpicker==2.1.1
-sphinx
-sphinx-rtd-theme
+pytest==5.4.3
+coverage==4.5.4
+pytest-cov==2.10.0
+hypothesis==5.16.0
+coveralls==2.0.0
+pcpartpicker==2.2.1
+sphinx==3.1.0
+sphinx-rtd-theme==0.4.3
